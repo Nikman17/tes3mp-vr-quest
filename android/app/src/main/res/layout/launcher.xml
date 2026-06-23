@@ -64,7 +64,7 @@
                 android:id="@+id/select_data_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Select Game Data Folder"
+                android:text="📂  Browse for Morrowind Folder…"
                 android:textSize="13sp"
                 android:layout_marginBottom="6dp" />
 
