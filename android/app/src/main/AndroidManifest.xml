@@ -26,6 +26,7 @@
         <activity
             android:name="ui.activity.LauncherActivity"
             android:exported="true"
+            android:theme="@style/MyTheme"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
@@ -38,12 +39,14 @@
         <activity
             android:name="ui.activity.MainActivity"
             android:exported="false"
+            android:theme="@style/MyTheme"
             android:screenOrientation="landscape"/>
 
         <!-- Mods manager -->
         <activity
             android:name="ui.activity.ModsActivity"
             android:exported="false"
+            android:theme="@style/MyTheme"
             android:screenOrientation="landscape"/>
 
         <!-- VR entry point (preps assets, then launches game) -->
