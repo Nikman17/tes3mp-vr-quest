@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="xyz.morrowind.tes3mpvr">
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="org.khronos.openxr.permission.OPENXR_SYSTEM" />
+
+    <!-- Quest 2 VR -->
+    <uses-feature android:name="android.hardware.vr.headtracking"
+        android:required="true" android:version="1"/>
+    <uses-feature android:name="oculus.software.handtracking"
+        android:required="false"/>
+
+    <application
+        android:label="TES3MP VR"
+        android:icon="@drawable/ic_launcher"
+        android:allowBackup="false"
+        android:extractNativeLibs="true"
+        android:name="utils.MyApp">
+
+        <!-- Лаунчер відкривається першим -->
+        <activity
+            android:name="ui.activity.LauncherActivity"
+            android:exported="true"
+            android:screenOrientation="landscape">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="com.oculus.intent.category.VR"/>
+            </intent-filter>
+        </activity>
+
+        <!-- Settings screen -->
+        <activity
+            android:name="ui.activity.MainActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"/>
+
+        <!-- Mods manager -->
+        <activity
+            android:name="ui.activity.ModsActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"/>
+
+        <!-- VR entry point (preps assets, then launches game) -->
+        <activity
+            android:name="ui.activity.VrEntryActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:configChanges="screenSize|orientation|keyboardHidden"/>
+
+        <!-- Main VR game activity (SDL + OpenXR) -->
+        <activity
+            android:name="ui.activity.GameActivity"
+            android:exported="false"
+            android:screenOrientation="landscape"
+            android:configChanges="screenSize|orientation|keyboardHidden"/>
+
+        <!-- TES3MP Server Browser -->
+        <activity
+            android:name=".ServerBrowserActivity"
+            android:exported="false"/>
+    </application>
+</manifest>
