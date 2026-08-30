@@ -144,6 +144,9 @@ fi
 echo "==> Applying Android OpenXR loader init patch (xrInitializeLoaderKHR)..."
 python3 "$ROOT/../patch_openxr_android_init.py"
 
+echo "==> Applying Quest GLES present-path patch (raw swapchain blit + ESSL gamma shader)..."
+python3 "$ROOT/../patch_quest_swapchain_blit.py"
+
 echo ""
 echo "==> Setup complete!"
 echo ""
