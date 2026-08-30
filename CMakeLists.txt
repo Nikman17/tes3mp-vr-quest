@@ -1,7 +1,34 @@
-project(OpenMW)
+project(TES3MP_VR VERSION 0.9.0)
 cmake_minimum_required(VERSION 3.1.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ── Feature flags ───────────────────────────────────────────────
+option(BUILD_MULTIPLAYER  "Build TES3MP multiplayer"  ON)
+option(BUILD_VR           "Build OpenXR VR support"   ON)
+option(BUILD_SERVER       "Build dedicated server"    ON)
+option(BUILD_ANDROID      "Build for Android/Quest"   OFF)
+option(BUILD_OPENCS       "Build OpenMW-CS editor"    OFF)
+
+# ── Android / Quest ─────────────────────────────────────────────
+if(BUILD_ANDROID OR ANDROID)
+  set(BUILD_ANDROID ON)
+  set(ANDROID_ABI arm64-v8a)
+  set(ANDROID_PLATFORM android-26)   # Quest 2 minimum API
+  add_definitions(-DANDROID -DQUEST_VR)
+endif()
+
+# ── OpenXR (VR) ─────────────────────────────────────────────────
+if(BUILD_VR)
+  if(BUILD_ANDROID)
+    find_path(OPENXR_INCLUDE openxr/openxr.h PATHS ${CMAKE_SOURCE_DIR}/extern/openxr/include)
+    find_library(OPENXR_LOADER openxr_loader PATHS ${CMAKE_SOURCE_DIR}/extern/openxr/libs/android/arm64-v8a)
+  else()
+    find_package(OpenXR REQUIRED)
+  endif()
+  add_definitions(-DOPENMW_VR)
+endif()
+
 
 # for link time optimization, remove if cmake version is >= 3.9
 if(POLICY CMP0069) # LTO
@@ -195,8 +222,14 @@ if (WIN32)
     option(USE_DEBUG_CONSOLE "whether a debug console should be enabled for debug builds, if false debug output is redirected to Visual Studio output" ON)
 endif()
 
-find_package(RakNet REQUIRED)
-include_directories(${RakNet_INCLUDES})
+
+# ── CrabNet (TES3MP networking) ──
+if(BUILD_MULTIPLAYER)
+  add_subdirectory(extern/CrabNet)
+  find_package(Lua 5.3 REQUIRED)
+  add_definitions(-DTES3MP -DCRABNET)
+endif()
+
 
 # Dependencies
 find_package(OpenGL REQUIRED)

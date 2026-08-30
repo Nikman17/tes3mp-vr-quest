@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="org.khronos.openxr.permission.OPENXR" />
     <uses-permission android:name="org.khronos.openxr.permission.OPENXR_SYSTEM" />
 
     <!-- Quest 2 VR -->
@@ -15,12 +16,27 @@
     <uses-feature android:name="oculus.software.handtracking"
         android:required="false"/>
 
+    <!-- Required so the Khronos OpenXR loader can discover the Meta runtime broker (Android 11+) -->
+    <queries>
+        <provider android:authorities="org.khronos.openxr.runtime_broker;org.khronos.openxr.system_runtime_broker" />
+        <intent>
+            <action android:name="org.khronos.openxr.OpenXRRuntimeService" />
+        </intent>
+        <intent>
+            <action android:name="org.khronos.openxr.OpenXRApiLayerService" />
+        </intent>
+    </queries>
+
     <application
         android:label="TES3MP VR"
         android:icon="@drawable/ic_launcher"
         android:allowBackup="false"
         android:extractNativeLibs="true"
+        android:requestLegacyExternalStorage="true"
         android:name="utils.MyApp">
+
+        <meta-data android:name="com.oculus.supportedDevices" android:value="quest|quest2|questpro|quest3|quest3s" />
+        <meta-data android:name="com.oculus.supportedInputDevices" android:value="controller|hand_tracking" />
 
         <!-- Лаунчер відкривається першим (2D панель, не VR) -->
         <activity
@@ -53,15 +69,27 @@
         <activity
             android:name="ui.activity.VrEntryActivity"
             android:exported="false"
+            android:theme="@style/MyTheme"
             android:screenOrientation="landscape"
             android:configChanges="screenSize|orientation|keyboardHidden"/>
 
-        <!-- Main VR game activity (SDL + OpenXR) -->
+        <!-- Main VR game activity (SDL + OpenXR), runs immersive on Quest -->
         <activity
             android:name="ui.activity.GameActivity"
-            android:exported="false"
+            android:exported="true"
+            android:theme="@style/MyTheme"
+            android:launchMode="singleTask"
+            android:resizeableActivity="false"
+            android:excludeFromRecents="true"
             android:screenOrientation="landscape"
-            android:configChanges="screenSize|orientation|keyboardHidden"/>
+            android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode">
+            <meta-data android:name="com.oculus.vr.mode" android:value="vr_only" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.oculus.intent.category.VR" />
+            </intent-filter>
+        </activity>
 
         <!-- TES3MP Server Browser -->
         <activity

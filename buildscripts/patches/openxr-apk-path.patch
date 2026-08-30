@@ -1,0 +1,24 @@
+--- src/common/filesystem_utils.cpp
++++ src/common/filesystem_utils.cpp
+@@ -107,6 +107,11 @@
+ }
+ 
+ bool FileSysUtilsPathExists(const std::string& path) {
++#if defined(__ANDROID__)
++    if (path.find("!/") != std::string::npos) {
++        return true;
++    }
++#endif
+     return (access(path.c_str(), F_OK) != -1);
+ }
+ 
+--- src/loader/android_utilities.cpp
++++ src/loader/android_utilities.cpp
+@@ -2,6 +2,7 @@
+ // Copyright (c) 2020-2024, The Khronos Group Inc.
+ //
+ // SPDX-License-Identifier:  Apache-2.0 OR MIT
++#include <limits>
+ 
+ #include "android_utilities.h"
+ 

@@ -30,9 +30,7 @@ import android.util.Log
 import android.view.WindowManager
 import android.view.View
 import android.widget.RelativeLayout
-import org.json.JSONObject
 import com.libopenmw.openmw.R
-import java.io.File
 
 import org.libsdl.app.SDLActivity
 
@@ -95,6 +93,8 @@ open class GameActivity : SDLActivity() {
         }
 
         System.loadLibrary("GL")
+        // Bundled Khronos OpenXR loader; native code initializes it via
+        // xrInitializeLoaderKHR and discovers the Meta runtime through the broker
         System.loadLibrary("openxr_loader")
         System.loadLibrary("openmw")
     }
@@ -110,8 +110,6 @@ open class GameActivity : SDLActivity() {
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ensureNativeLibrariesLoaded()
-        configureQuestOpenXrRuntime()
-        initOpenXRLoader()
         KeepScreenOn()
         window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         getPathToJni(filesDir.parent, Constants.USER_FILE_STORAGE)
@@ -188,30 +186,6 @@ open class GameActivity : SDLActivity() {
     }
 
     private external fun getPathToJni(path_global: String, path_user: String)
-
-    private external fun initOpenXRLoader()
-
-    private external fun setOpenXrRuntimeJson(runtimeJsonPath: String)
-
-    private fun configureQuestOpenXrRuntime() {
-        try {
-            val runtimeDir = File(filesDir, "openxr")
-            if (!runtimeDir.exists()) {
-                runtimeDir.mkdirs()
-            }
-            val runtimeJson = File(runtimeDir, "active_runtime.aarch64.json")
-            val json = JSONObject()
-            val runtime = JSONObject()
-            runtime.put("library_path", "libopenxr_forwardloader.so")
-            json.put("file_format_version", "1.0.0")
-            json.put("runtime", runtime)
-            runtimeJson.writeText(json.toString())
-            setOpenXrRuntimeJson(runtimeJson.absolutePath)
-            Log.i("OpenMW", "OpenXR runtime bootstrap: Quest Forward Loader -> " + runtimeJson.absolutePath)
-        } catch (e: Exception) {
-            Log.e("OpenMW", "Failed to configure OpenXR runtime JSON", e)
-        }
-    }
 
     companion object {
         var mouseMode = MouseMode.Hybrid

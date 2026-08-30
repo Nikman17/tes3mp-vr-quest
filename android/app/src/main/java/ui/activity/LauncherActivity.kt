@@ -11,10 +11,12 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.preference.PreferenceManager
 import android.provider.DocumentsContract
+import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -58,6 +60,15 @@ class LauncherActivity : AppCompatActivity() {
         Log.d(TAG, "onCreate")
         super.onCreate(savedInstanceState)
         PermissionHelper.getWriteExternalStoragePermission(this)
+        // On Android 11+ request MANAGE_EXTERNAL_STORAGE so File.list() works on /sdcard
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager()) {
+                Log.w(TAG, "MANAGE_EXTERNAL_STORAGE not granted — requesting")
+                val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                    .setData(Uri.parse("package:$packageName"))
+                startActivity(intent)
+            }
+        }
         setContentView(R.layout.launcher)
 
         prefs = PreferenceManager.getDefaultSharedPreferences(this)
@@ -190,6 +201,11 @@ class LauncherActivity : AppCompatActivity() {
 
     private fun setupData(path: String) {
         Log.d(TAG, "setupData: $path")
+        val dir = java.io.File(path)
+        Log.d(TAG, "dir.exists=${dir.exists()} dir.isDirectory=${dir.isDirectory} canRead=${dir.canRead()}")
+        val listing = dir.list()
+        Log.d(TAG, "dir.list=${listing?.joinToString() ?: "NULL"}")
+        Log.d(TAG, "isExternalStorageManager=${if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) Environment.isExternalStorageManager() else "n/a"}")
         val inst = GameInstaller(path)
         if (!inst.check()) {
             statusView.text = "Invalid folder — need Morrowind.ini + Data Files inside"
@@ -251,24 +267,34 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun writeMultiplayerCfg(ip: String, port: String) {
-        try {
-            val cfgDir = java.io.File(Environment.getExternalStorageDirectory(), "tes3mpvr/config")
-            cfgDir.mkdirs()
-            java.io.File(cfgDir, "tes3mp-client-default.cfg").writeText(
-                "[General]\naddress = $ip\nport = $port\n"
-            )
-            Log.d(TAG, "MP cfg written: $ip:$port")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to write MP cfg", e)
+        val content = "[General]\ndestinationAddress = $ip\nport = $port\npassword =\nlogLevel = 1\n\n" +
+            "[Master]\naddress = master.tes3mp.com\nport = 25561\n\n" +
+            "[Chat]\nkeySay = F5\nkeyChatMode = T\nx = 0\ny = 150\nw = 300\nh = 300\ndelay = 5.0\n"
+        // TES3MP reads from /sdcard/tes3mpvr/config/ (USER_FILE_STORAGE = sdcard/<app_slug>/)
+        // and also writes logs there, so that's the correct location
+        val targets = listOf(
+            java.io.File(Environment.getExternalStorageDirectory(), "tes3mpvr/config/tes3mp-client-default.cfg"),
+            java.io.File(filesDir, "config/tes3mp-client-default.cfg")
+        )
+        for (f in targets) {
+            try {
+                f.parentFile?.mkdirs()
+                f.writeText(content)
+                Log.d(TAG, "MP cfg written to ${f.absolutePath}: $ip:$port")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to write MP cfg to ${f.absolutePath}", e)
+            }
         }
     }
 
     private fun clearMultiplayerCfg() {
-        try {
-            java.io.File(
-                Environment.getExternalStorageDirectory(), "tes3mpvr/config/tes3mp-client-default.cfg"
-            ).delete()
-        } catch (e: Exception) { /* ignore */ }
+        val targets = listOf(
+            java.io.File(filesDir, "config/tes3mp-client-default.cfg"),
+            java.io.File(Environment.getExternalStorageDirectory(), "tes3mpvr/config/tes3mp-client-default.cfg")
+        )
+        for (f in targets) {
+            try { f.delete() } catch (e: Exception) { /* ignore */ }
+        }
     }
 
     // ── helpers ───────────────────────────────────────────────────────

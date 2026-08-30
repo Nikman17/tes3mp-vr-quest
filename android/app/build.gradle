@@ -1,0 +1,113 @@
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-parcelize'
+
+ext {
+    versionFile = new File(project.rootDir, 'app/src/main/assets/libopenmw/resources/version')
+    calculateVersion = {
+        if (!versionFile.exists()) {
+            return "dev-" + project.android.defaultConfig.versionCode.toString()
+        }
+
+        versionFile.withInputStream { stream ->
+            return stream.readLines()[0].trim() + "-" + project.android.defaultConfig.versionCode.toString()
+        }
+    }
+}
+
+android {
+    namespace "com.libopenmw.openmw"
+    compileSdkVersion 34
+
+    sourceSets {
+        main {
+            resources {
+                srcDir {
+                    // To include the wrap.sh script required by ASAN
+                    "wrap/res"
+                }
+            }
+        }
+    }
+
+    defaultConfig {
+        applicationId "xyz.morrowind.tes3mpvr"
+        versionCode 45
+        versionName calculateVersion()
+
+        minSdkVersion 26
+        // Do not update past 29 -- see https://github.com/xyzz/openmw-android/issues/30
+        targetSdkVersion 32
+
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+    }
+
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
+
+    signingConfigs {
+        release {
+            storeFile file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+
+        debug {
+            applicationIdSuffix ".debug"
+            debuggable true
+        }
+    }
+
+    flavorDimensions "version"
+
+    productFlavors {
+        mainline {
+            dimension "version"
+        }
+
+        nightly {
+            dimension "version"
+            applicationId "xyz.morrowind.tes3mpvr"
+            versionNameSuffix "-nightly"
+        }
+    }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "OpenMW-VR_${variant.buildType.name}.apk"
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.google.android.material:material:1.2.0'
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
+
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.4'
+    implementation 'com.google.code.gson:gson:2.10.1'
+
+
+    implementation project(':storagechooser')
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'com.bugsnag:bugsnag-android:4.+'
+
+    testImplementation 'junit:junit:4.12'
+}

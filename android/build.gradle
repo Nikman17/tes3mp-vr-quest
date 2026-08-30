@@ -1,0 +1,36 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    ext.kotlin_version = '1.6.21'
+    ext.anko_version = '0.10.8'
+    repositories {
+        google()
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.2.2'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+        jcenter()
+        maven {
+            url "https://jitpack.io"
+            content {
+                // For some reason gradle attempts to get bugsnag from here, which returns 522
+                // after which gradle just drops jitpack. Exclude so it doesn't bother trying.
+                excludeGroupByRegex ".*bugsnag.*"
+            }
+        }
+    }
+}
+
+apply plugin: 'idea'
+
+idea.module {
+    excludeDirs += file('buildscripts/')
+}

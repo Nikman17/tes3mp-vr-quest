@@ -5,7 +5,8 @@ CMakeCache.txt
 cmake_install.cmake
 Makefile
 makefile
-build*/
+build-android/
+build-server/
 prebuilt
 
 ##windows build process
@@ -86,3 +87,19 @@ moc_*.cxx
 *.[ao]
 *.so
 venv/
+
+# --- TES3MP-VR Quest 2 port: build artifacts (regenerable) ---
+android/.gradle/
+android/app/build/
+android/app/src/main/jniLibs/
+android/app/src/main/assets/libopenmw/
+android/local.properties
+buildscripts/openmw-vr/
+buildscripts/downloads/
+buildscripts/prefix/
+buildscripts/build/
+buildscripts/toolchain/
+buildscripts/*.log
+build-android/
+extern/CrabNet/
+buildscripts/build_log.txt
