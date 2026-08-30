@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 set -e
 
 NDK="${ANDROID_NDK_HOME:-$HOME/Android/Sdk/ndk/26.3.11579264}"
@@ -36,4 +36,4 @@ echo "=== Copying .so files to jniLibs ==="
 mkdir -p android/app/src/main/jniLibs/$ABI
 find build-android -name "*.so" -exec cp {} android/app/src/main/jniLibs/$ABI/ \;
 
-echo "Done. Run: buildscripts/build-apk.sh"
+echo "Done. Run: buildscripts/install_and_apk.sh"

@@ -103,3 +103,4 @@ buildscripts/*.log
 build-android/
 extern/CrabNet/
 buildscripts/build_log.txt
+buildscripts/openmw-vr-sp/

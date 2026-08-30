@@ -15,9 +15,11 @@ License: GPLv3. Requires original Morrowind data files.
 
 ## What works on device
 - Full TES3MP multiplayer: chargen, world/actor/container sync, chat
-- **Singleplayer via an embedded local server**: the arm64 `tes3mp-server`
-  ships inside the APK, starts on 127.0.0.1 when Singleplayer is selected and
-  stops when going online; CoreScripts live in `/sdcard/tes3mpvr/server/`
+- **True singleplayer**: the APK carries TWO engines — `libopenmw.so` (TES3MP
+  client) and `libopenmw-sp.so` (vanilla OpenMW-VR, no networking layer, full
+  quest/script compatibility). The launcher picks one per mode.
+  (An arm64 `tes3mp-server` also builds from this tree — `make tes3mp-server` +
+  `quest-patches/patch_server_android.py` — planned as a separate host app.)
 - Stereo OpenXR rendering through gl4es with a raw-GLES3 present path
 - VR hands (Oculus Touch), realistic melee combat, wrist HUD & chat
 - Chat controls without a keyboard: left thumbstick click opens the input line

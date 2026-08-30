@@ -40,10 +40,14 @@ if [ -n "$OPENXR_LOADER" ]; then
     echo "    libopenxr_loader.so"
 fi
 
-# Embedded singleplayer server (built via: make tes3mp-server)
-if [ -f "$OPENMW_BUILD/tes3mp-server" ]; then
-    cp "$OPENMW_BUILD/tes3mp-server" "$JNIDIR/libtes3mp-server.so"
-    echo "    tes3mp-server -> libtes3mp-server.so"
+# Vanilla singleplayer engine (built via .logs/build_sp_engine.sh -> openmw-sp-build)
+SP_BUILD="$BUILD_DIR/openmw-sp-build"
+SP_SO=$(find "$SP_BUILD" -maxdepth 2 \( -name 'libopenmw.so' -o -name 'libtes3mp.so' \) 2>/dev/null | head -n 1)
+if [ -n "$SP_SO" ]; then
+    cp "$SP_SO" "$JNIDIR/libopenmw-sp.so"
+    echo "    $(basename "$SP_SO") -> libopenmw-sp.so"
+else
+    echo "    WARNING: vanilla SP engine not found (singleplayer mode will not launch)"
 fi
 
 # Core deps (libGL.so = gl4es, required by GameActivity.loadLibraries)

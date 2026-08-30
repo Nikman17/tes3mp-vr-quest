@@ -266,29 +266,12 @@ class LauncherActivity : AppCompatActivity() {
                 statusView.text = "Please enter the server IP address"
                 return
             }
-            utils.LocalServer.stop() // don't keep a stray local server around online
             writeMultiplayerCfg(ip, serverPortEdit.text.toString().trim().ifEmpty { DEFAULT_PORT })
-            proceedToGame()
-        } else {
-            // Singleplayer = embedded local server on 127.0.0.1 (TES3MP has no offline mode)
-            launchInProgress = true
-            setButtonsEnabled(false)
-            statusView.text = "Starting local server…"
-            Thread {
-                val ok = utils.LocalServer.ensureFiles(this, com.libopenmw.openmw.BuildConfig.VERSION_CODE)
-                val error = if (!ok) "Failed to unpack server files" else utils.LocalServer.start(this)
-                runOnUiThread {
-                    if (error != null) {
-                        launchInProgress = false
-                        setButtonsEnabled(true)
-                        statusView.text = error
-                    } else {
-                        writeMultiplayerCfg("127.0.0.1", DEFAULT_PORT)
-                        proceedToGame()
-                    }
-                }
-            }.start()
         }
+        // Singleplayer runs the vanilla OpenMW-VR engine (libopenmw-sp.so):
+        // full quest/script compatibility, no networking layer, no server needed.
+        // GameActivity picks the engine from the saved tes3mp_mode preference.
+        proceedToGame()
     }
 
     private fun proceedToGame() {

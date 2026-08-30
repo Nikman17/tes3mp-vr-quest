@@ -96,11 +96,23 @@ open class GameActivity : SDLActivity() {
         // Bundled Khronos OpenXR loader; native code initializes it via
         // xrInitializeLoaderKHR and discovers the Meta runtime through the broker
         System.loadLibrary("openxr_loader")
-        System.loadLibrary("openmw")
+        System.loadLibrary(engineLibName())
+    }
+
+    /**
+     * Two engines ship in the APK:
+     *  - libopenmw.so    — TES3MP client (multiplayer; always connects to a server)
+     *  - libopenmw-sp.so — vanilla OpenMW-VR (true singleplayer: full quest/script
+     *                      compatibility, no networking layer at all)
+     */
+    private fun engineLibName(): String {
+        val sp = PreferenceManager.getDefaultSharedPreferences(this)
+            .getString("tes3mp_mode", "singleplayer") != "multiplayer"
+        return if (sp) "openmw-sp" else "openmw"
     }
 
     override fun getMainSharedObject(): String {
-        return "libopenmw.so"
+        return "lib${engineLibName()}.so"
     }
 
     override fun shouldRequireWindowFocusForResume(): Boolean {
