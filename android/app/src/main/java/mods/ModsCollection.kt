@@ -31,10 +31,11 @@ class ModsCollection(private val type: ModType,
                      private val db: ModsDatabaseOpenHelper) {
 
     val mods = arrayListOf<Mod>()
-    private var extensions: Array<String> = if (type == ModType.Resource)
-        arrayOf("bsa")
-    else
-        arrayOf("esm", "esp", "omwaddon", "omwgame")
+    private var extensions: Array<String> = when (type) {
+        ModType.Resource -> arrayOf("bsa")
+        // Groundcover files are regular plugins dedicated to grass, loaded via groundcover=
+        else -> arrayOf("esm", "esp", "omwaddon", "omwgame")
+    }
 
     init {
         if (isEmpty())

@@ -274,6 +274,7 @@ open class MainActivity : AppCompatActivity() {
         val db = ModsDatabaseOpenHelper.getInstance(this)
         val resources = ModsCollection(ModType.Resource, dataFiles, db)
         val plugins = ModsCollection(ModType.Plugin, dataFiles, db)
+        val groundcover = ModsCollection(ModType.Groundcover, dataFiles, db)
 
         try {
             // generate final output.cfg
@@ -288,6 +289,11 @@ open class MainActivity : AppCompatActivity() {
             plugins.mods
                 .filter { it.enabled }
                 .forEach { output += "content=${it.filename}\n" }
+
+            // output groundcover (grass) files; must not repeat content= entries
+            groundcover.mods
+                .filter { it.enabled }
+                .forEach { output += "groundcover=${it.filename}\n" }
 
             // write everything to openmw.cfg
             File(Constants.OPENMW_CFG).writeText(output)

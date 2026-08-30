@@ -253,7 +253,17 @@ class LauncherActivity : AppCompatActivity() {
             }
             writeMultiplayerCfg(ip, serverPortEdit.text.toString().trim().ifEmpty { DEFAULT_PORT })
         } else {
-            clearMultiplayerCfg()
+            // TES3MP has no offline mode: without a server config the engine exits
+            // right after start. Be honest about it instead of silently failing.
+            AlertDialog.Builder(this)
+                .setTitle("Singleplayer unavailable")
+                .setMessage("TES3MP is multiplayer-only: the client always connects to a server.\n\n" +
+                    "Use Multiplayer mode with your LAN or online server.\n" +
+                    "An embedded local server for true singleplayer is planned.")
+                .setPositiveButton(android.R.string.ok) { _: DialogInterface, _: Int -> }
+                .show()
+            statusView.text = "Singleplayer needs a (local) server — use Multiplayer for now"
+            return
         }
 
         launchInProgress = true
