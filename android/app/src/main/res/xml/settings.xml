@@ -14,10 +14,7 @@
             android:defaultValue="@string/pref_encoding_default"
             />
 
-        <Preference
-            android:key="game_files"
-            android:title="@string/game_files"
-            />
+        <!-- game_files entry removed: the launcher panel owns data folder selection -->
 
     </PreferenceCategory>
 

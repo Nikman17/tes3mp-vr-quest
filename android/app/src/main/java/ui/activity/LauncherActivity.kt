@@ -266,21 +266,32 @@ class LauncherActivity : AppCompatActivity() {
                 statusView.text = "Please enter the server IP address"
                 return
             }
+            utils.LocalServer.stop() // don't keep a stray local server around online
             writeMultiplayerCfg(ip, serverPortEdit.text.toString().trim().ifEmpty { DEFAULT_PORT })
+            proceedToGame()
         } else {
-            // TES3MP has no offline mode: without a server config the engine exits
-            // right after start. Be honest about it instead of silently failing.
-            AlertDialog.Builder(this)
-                .setTitle("Singleplayer unavailable")
-                .setMessage("TES3MP is multiplayer-only: the client always connects to a server.\n\n" +
-                    "Use Multiplayer mode with your LAN or online server.\n" +
-                    "An embedded local server for true singleplayer is planned.")
-                .setPositiveButton(android.R.string.ok) { _: DialogInterface, _: Int -> }
-                .show()
-            statusView.text = "Singleplayer needs a (local) server — use Multiplayer for now"
-            return
+            // Singleplayer = embedded local server on 127.0.0.1 (TES3MP has no offline mode)
+            launchInProgress = true
+            setButtonsEnabled(false)
+            statusView.text = "Starting local server…"
+            Thread {
+                val ok = utils.LocalServer.ensureFiles(this, com.libopenmw.openmw.BuildConfig.VERSION_CODE)
+                val error = if (!ok) "Failed to unpack server files" else utils.LocalServer.start(this)
+                runOnUiThread {
+                    if (error != null) {
+                        launchInProgress = false
+                        setButtonsEnabled(true)
+                        statusView.text = error
+                    } else {
+                        writeMultiplayerCfg("127.0.0.1", DEFAULT_PORT)
+                        proceedToGame()
+                    }
+                }
+            }.start()
         }
+    }
 
+    private fun proceedToGame() {
         writeVrSettings()
 
         launchInProgress = true
@@ -296,7 +307,23 @@ class LauncherActivity : AppCompatActivity() {
     // ── VR settings ───────────────────────────────────────────────────
 
     private fun setupVrSpinner(spinner: Spinner, prefKey: String, values: Array<String>) {
-        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, values)
+        // The panel background is dark; the stock spinner item text is dark too,
+        // which made the closed spinner look empty ("broken"). Force light text.
+        val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, values) {
+            override fun getView(position: Int, convertView: View?, parent: android.view.ViewGroup): View {
+                val v = super.getView(position, convertView, parent) as TextView
+                v.setTextColor(0xFFFFFFFF.toInt())
+                v.textSize = 13f
+                return v
+            }
+            override fun getDropDownView(position: Int, convertView: View?, parent: android.view.ViewGroup): View {
+                val v = super.getDropDownView(position, convertView, parent) as TextView
+                v.setTextColor(0xFF000000.toInt())
+                return v
+            }
+        }
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
         spinner.setSelection(prefs.getInt(prefKey, 0))
         spinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {

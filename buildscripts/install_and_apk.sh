@@ -40,6 +40,12 @@ if [ -n "$OPENXR_LOADER" ]; then
     echo "    libopenxr_loader.so"
 fi
 
+# Embedded singleplayer server (built via: make tes3mp-server)
+if [ -f "$OPENMW_BUILD/tes3mp-server" ]; then
+    cp "$OPENMW_BUILD/tes3mp-server" "$JNIDIR/libtes3mp-server.so"
+    echo "    tes3mp-server -> libtes3mp-server.so"
+fi
+
 # Core deps (libGL.so = gl4es, required by GameActivity.loadLibraries)
 for lib in libGL.so libopenal.so libSDL2.so libhidapi.so; do
     if [ -f "$BUILDSCRIPTS/prefix/arm64/lib/$lib" ]; then

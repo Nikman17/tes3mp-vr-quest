@@ -62,7 +62,9 @@ class FragmentSettings : PreferenceFragment(), OnSharedPreferenceChangeListener 
         updateGammaState()
         Log.d(TAG, "FragmentSettings.onCreate: updated gamma state")
 
-        findPreference("game_files").setOnPreferenceClickListener {
+        // game_files preference removed from settings.xml: the launcher panel owns
+        // data folder selection now, keeping this screen purely about engine options.
+        findPreference("game_files")?.setOnPreferenceClickListener {
             if (ContextCompat.checkSelfPermission(activity,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 showError(R.string.permissions_error_title, R.string.permissions_error_message)
