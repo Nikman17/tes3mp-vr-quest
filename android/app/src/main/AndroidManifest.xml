@@ -73,7 +73,10 @@
             android:screenOrientation="landscape"
             android:configChanges="screenSize|orientation|keyboardHidden"/>
 
-        <!-- Main VR game activity (SDL + OpenXR), runs immersive on Quest -->
+        <!-- Main VR game activity (SDL + OpenXR), runs immersive on Quest.
+             NOTE: intentionally NO MAIN/VR intent-filter — otherwise the Quest
+             library launches the game directly, skipping the launcher panel.
+             It is started explicitly by VrEntryActivity (and adb). -->
         <activity
             android:name="ui.activity.GameActivity"
             android:exported="true"
@@ -84,11 +87,6 @@
             android:screenOrientation="landscape"
             android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode">
             <meta-data android:name="com.oculus.vr.mode" android:value="vr_only" />
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="com.oculus.intent.category.VR" />
-            </intent-filter>
         </activity>
 
         <!-- TES3MP Server Browser -->
