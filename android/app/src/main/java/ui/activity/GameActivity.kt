@@ -147,6 +147,9 @@ open class GameActivity : SDLActivity() {
 
     public override fun onDestroy() {
         super.onDestroy()
+        // SDL cannot run main() twice in one process; kill it so the next
+        // launch starts clean instead of hanging on a dead engine (tomups' trick)
+        Process.killProcess(Process.myPid())
     }
 
 
