@@ -32,7 +32,8 @@ android {
 
     defaultConfig {
         applicationId "xyz.morrowind.tes3mpvr"
-        versionCode 45
+        // versionCode bump redeploys private resources/config from assets on next start
+        versionCode 46
         versionName calculateVersion()
 
         minSdkVersion 26

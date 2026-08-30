@@ -153,6 +153,9 @@ python3 "$ROOT/../patch_vr_chat_buttons.py"
 echo "==> Applying chat font Cyrillic ranges patch..."
 python3 "$ROOT/../patch_vr_chat_font.py"
 
+echo "==> Applying chat XR actions patch (stick-click say/visibility)..."
+python3 "$ROOT/../patch_vr_chat_actions.py"
+
 echo ""
 echo "==> Setup complete!"
 echo ""
