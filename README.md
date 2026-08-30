@@ -15,8 +15,14 @@ License: GPLv3. Requires original Morrowind data files.
 
 ## What works on device
 - Full TES3MP multiplayer: chargen, world/actor/container sync, chat
+- **Singleplayer via an embedded local server**: the arm64 `tes3mp-server`
+  ships inside the APK, starts on 127.0.0.1 when Singleplayer is selected and
+  stops when going online; CoreScripts live in `/sdcard/tes3mpvr/server/`
 - Stereo OpenXR rendering through gl4es with a raw-GLES3 present path
 - VR hands (Oculus Touch), realistic melee combat, wrist HUD & chat
+- Chat controls without a keyboard: left thumbstick click opens the input line
+  (VR keyboard pops via focus), right thumbstick click toggles visibility;
+  plus pointer-clickable Type/Show-Hide buttons on the chat window
 - Cyrillic text (win1251 game data + TTF chat font with Cyrillic glyph ranges)
 - Launcher panel: game data picker, mod/BSA/grass load order, server address,
   VR settings (turning, per-eye resolution, refresh rate, HUD position)
@@ -33,6 +39,7 @@ patchers in `buildscripts/quest-patches/` (hooked into `setup-source.sh`):
 | `patch_vr_chat_font` | Cyrillic glyph ranges for the chat TTF font |
 | `patch_vr_chat_actions` | chat input / visibility on thumbstick clicks (OpenXR actions) |
 | `patch_vr_refresh_rate` | `XR_FB_display_refresh_rate` (72/90/120 Hz from the launcher) |
+| `patch_server_android` | dedicated server compiles under aarch64/clang (va_list struct mapping, constexpr signature table mirrored by a runtime address table) |
 
 Also patched along the way: null-safe `omwSurfaceDestroyed` (Oculus shell kills
 the 2D surface mid-startup), `libGL.so` packaging, TES3MP wire-compat

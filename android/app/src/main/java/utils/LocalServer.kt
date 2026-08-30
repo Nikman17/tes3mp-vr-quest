@@ -25,16 +25,28 @@ object LocalServer {
 
     fun serverDir(): File = File(Environment.getExternalStorageDirectory(), SERVER_SUBDIR)
 
-    /** Copies assets/server -> /sdcard/tes3mpvr/server when missing or app updated. */
+    /**
+     * Copies assets/server -> /sdcard/tes3mpvr/server when missing or app updated.
+     * CoreScripts/data holds the WORLD SAVES (player/cell/world json) — on updates
+     * only the script code is refreshed; data/ and the server cfg are never
+     * overwritten once they exist.
+     */
     fun ensureFiles(ctx: Context, versionCode: Int): Boolean {
         val dir = serverDir()
         val stamp = File(dir, STAMP_NAME)
-        if (stamp.exists() && stamp.readText().trim() == versionCode.toString())
+        val firstDeploy = !stamp.exists()
+        if (!firstDeploy && stamp.readText().trim() == versionCode.toString())
             return true
         return try {
-            copyAssetDir(ctx, "server", dir)
+            if (firstDeploy) {
+                copyAssetDir(ctx, "server", dir)
+            } else {
+                // update: refresh code, preserve saves (data/) and user-tuned configs
+                copyAssetDir(ctx, "server/CoreScripts/scripts", File(dir, "CoreScripts/scripts"))
+                copyAssetDir(ctx, "server/CoreScripts/lib", File(dir, "CoreScripts/lib"))
+            }
             stamp.writeText(versionCode.toString())
-            Log.i(TAG, "Server files deployed to $dir")
+            Log.i(TAG, "Server files deployed to $dir (firstDeploy=$firstDeploy)")
             true
         } catch (e: Exception) {
             Log.e(TAG, "Failed to deploy server files", e)

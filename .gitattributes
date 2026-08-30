@@ -1,0 +1,10 @@
+# Shell/python scripts must stay LF: they run inside WSL/Linux and CRLF breaks them
+*.sh text eol=lf
+*.py text eol=lf
+*.cfg text
+*.lua text
+# Binary assets
+*.png binary
+*.tex binary
+*.bsa binary
+*.so binary
