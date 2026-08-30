@@ -141,20 +141,13 @@ if [ ! -f "$OPENMW_VR/CMakeLists.txt" ]; then
     exit 1
 fi
 
-echo "==> Applying Android OpenXR loader init patch (xrInitializeLoaderKHR)..."
-python3 "$ROOT/../patch_openxr_android_init.py"
-
-echo "==> Applying Quest GLES present-path patch (raw swapchain blit + ESSL gamma shader)..."
-python3 "$ROOT/../patch_quest_swapchain_blit.py"
-
-echo "==> Applying VR chat buttons patch (pointer-clickable Say/Mode)..."
-python3 "$ROOT/../patch_vr_chat_buttons.py"
-
-echo "==> Applying chat font Cyrillic ranges patch..."
-python3 "$ROOT/../patch_vr_chat_font.py"
-
-echo "==> Applying chat XR actions patch (stick-click say/visibility)..."
-python3 "$ROOT/../patch_vr_chat_actions.py"
+# Quest-specific patches live in the repo (buildscripts/quest-patches); each is idempotent
+echo "==> Applying Quest patches..."
+for p in patch_openxr_android_init patch_quest_swapchain_blit patch_vr_chat_buttons \
+         patch_vr_chat_font patch_vr_chat_actions patch_vr_refresh_rate; do
+    echo "  -> $p"
+    python3 "$DIR/quest-patches/$p.py"
+done
 
 echo ""
 echo "==> Setup complete!"
