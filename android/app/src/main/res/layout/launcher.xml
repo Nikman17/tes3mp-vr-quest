@@ -2,98 +2,123 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1a1a2e">
+    android:background="#14110d"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp">
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="24dp">
 
-        <!-- Title -->
+        <!-- ── Header ── -->
         <TextView
             android:id="@+id/launcher_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="TES3MP VR"
-            android:textSize="28sp"
+            android:textSize="30sp"
             android:textStyle="bold"
-            android:textColor="#e6b800"
-            android:gravity="center"
-            android:layout_marginBottom="6dp" />
+            android:letterSpacing="0.12"
+            android:fontFamily="serif"
+            android:textColor="#d9a92f"
+            android:gravity="center" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="OpenMW-VR + TES3MP"
-            android:textSize="13sp"
-            android:textColor="#888888"
+            android:text="Morrowind multiplayer &amp; singleplayer for Quest"
+            android:textSize="12sp"
+            android:letterSpacing="0.04"
+            android:textColor="#8d8069"
             android:gravity="center"
-            android:layout_marginBottom="20dp" />
+            android:layout_marginTop="2dp"
+            android:layout_marginBottom="18dp" />
 
         <!-- ── GAME DATA ── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#0d0d1a"
-            android:padding="14dp"
-            android:layout_marginBottom="12dp">
+            android:background="@drawable/lc_card"
+            android:padding="16dp"
+            android:layout_marginBottom="14dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="GAME DATA"
                 android:textSize="11sp"
-                android:textColor="#e6b800"
+                android:textColor="#d9a92f"
                 android:textStyle="bold"
-                android:layout_marginBottom="6dp" />
+                android:letterSpacing="0.15"
+                android:layout_marginBottom="8dp" />
 
             <TextView
                 android:id="@+id/game_data_path"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="(not configured)"
-                android:textSize="12sp"
-                android:textColor="#ff9800"
-                android:maxLines="2"
-                android:ellipsize="end"
-                android:layout_marginBottom="10dp" />
-
-            <Button
-                android:id="@+id/select_data_button"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="📂  Browse for Morrowind Folder…"
                 android:textSize="13sp"
-                android:layout_marginBottom="6dp" />
+                android:textColor="#ff9d3f"
+                android:maxLines="2"
+                android:ellipsize="middle"
+                android:layout_marginBottom="12dp" />
 
-            <Button
-                android:id="@+id/manage_mods_button"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Manage Mods / Content Files"
-                android:textSize="13sp" />
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/select_data_button"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Browse…"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    android:textColor="#e8dcc0"
+                    android:background="@drawable/lc_btn"
+                    android:stateListAnimator="@null"
+                    android:layout_marginEnd="10dp" />
+
+                <Button
+                    android:id="@+id/manage_mods_button"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="Mods &amp; Load Order"
+                    android:textAllCaps="false"
+                    android:textSize="14sp"
+                    android:textColor="#e8dcc0"
+                    android:background="@drawable/lc_btn"
+                    android:stateListAnimator="@null" />
+            </LinearLayout>
 
         </LinearLayout>
 
-        <!-- ── SP / MP SWITCH ── -->
+        <!-- ── MODE ── -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#0d0d1a"
-            android:padding="14dp"
-            android:layout_marginBottom="12dp">
+            android:background="@drawable/lc_card"
+            android:padding="16dp"
+            android:layout_marginBottom="14dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="MODE"
+                android:text="GAME MODE"
                 android:textSize="11sp"
-                android:textColor="#e6b800"
+                android:textColor="#d9a92f"
                 android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+                android:letterSpacing="0.15"
+                android:layout_marginBottom="10dp" />
 
             <RadioGroup
                 android:id="@+id/mode_radio_group"
@@ -104,104 +129,83 @@
                 <RadioButton
                     android:id="@+id/radio_singleplayer"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="52dp"
                     android:layout_weight="1"
+                    android:button="@null"
+                    android:background="@drawable/lc_segment"
                     android:text="Singleplayer"
-                    android:textColor="#cccccc"
-                    android:checked="true" />
+                    android:textColor="@color/lc_segment_text"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:checked="true"
+                    android:layout_marginEnd="10dp" />
 
                 <RadioButton
                     android:id="@+id/radio_multiplayer"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
+                    android:layout_height="52dp"
                     android:layout_weight="1"
-                    android:text="Multiplayer (TES3MP)"
-                    android:textColor="#cccccc" />
+                    android:button="@null"
+                    android:background="@drawable/lc_segment"
+                    android:text="Multiplayer"
+                    android:textColor="@color/lc_segment_text"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:gravity="center" />
 
             </RadioGroup>
 
-        </LinearLayout>
-
-        <!-- ── SERVER IP (shown only in MP mode) ── -->
-        <LinearLayout
-            android:id="@+id/server_section"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:background="#0d0d1a"
-            android:padding="14dp"
-            android:layout_marginBottom="12dp"
-            android:visibility="gone">
-
             <TextView
+                android:id="@+id/mode_hint"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="SERVER"
-                android:textSize="11sp"
-                android:textColor="#e6b800"
-                android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+                android:text="Vanilla OpenMW-VR engine — full quest and save compatibility."
+                android:textSize="12sp"
+                android:textColor="#8d8069"
+                android:layout_marginTop="10dp" />
 
+            <!-- Server fields (multiplayer only) -->
             <LinearLayout
+                android:id="@+id/server_section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="6dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="IP: "
-                    android:textColor="#cccccc"
-                    android:textSize="13sp"
-                    android:gravity="center_vertical"
-                    android:minWidth="30dp" />
+                android:layout_marginTop="12dp"
+                android:visibility="gone">
 
                 <EditText
                     android:id="@+id/server_ip_edit"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:hint="192.168.1.100"
-                    android:textColor="#ffffff"
-                    android:textColorHint="#666666"
-                    android:textSize="13sp"
+                    android:layout_height="48dp"
+                    android:layout_weight="7"
+                    android:hint="Server IP  (192.168.1.100)"
+                    android:textColor="#f0e8d4"
+                    android:textColorHint="#6d6250"
+                    android:textSize="14sp"
                     android:inputType="textUri"
                     android:maxLines="1"
                     android:imeOptions="actionDone"
-                    android:background="#1e1e2e"
-                    android:padding="8dp" />
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Port: "
-                    android:textColor="#cccccc"
-                    android:textSize="13sp"
-                    android:gravity="center_vertical"
-                    android:minWidth="30dp" />
+                    android:background="@drawable/lc_input"
+                    android:paddingLeft="14dp"
+                    android:paddingRight="14dp"
+                    android:layout_marginEnd="10dp" />
 
                 <EditText
                     android:id="@+id/server_port_edit"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_height="48dp"
+                    android:layout_weight="3"
                     android:hint="25565"
-                    android:textColor="#ffffff"
-                    android:textColorHint="#666666"
-                    android:textSize="13sp"
+                    android:textColor="#f0e8d4"
+                    android:textColorHint="#6d6250"
+                    android:textSize="14sp"
                     android:inputType="number"
                     android:maxLines="1"
                     android:imeOptions="actionDone"
-                    android:background="#1e1e2e"
-                    android:padding="8dp" />
+                    android:background="@drawable/lc_input"
+                    android:paddingLeft="14dp"
+                    android:paddingRight="14dp" />
 
             </LinearLayout>
 
@@ -212,77 +216,84 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="#0d0d1a"
-            android:padding="14dp"
-            android:layout_marginBottom="12dp">
+            android:background="@drawable/lc_card"
+            android:padding="16dp"
+            android:layout_marginBottom="18dp">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="VR SETTINGS"
+                android:text="VR COMFORT &amp; PERFORMANCE"
                 android:textSize="11sp"
-                android:textColor="#e6b800"
+                android:textColor="#d9a92f"
                 android:textStyle="bold"
-                android:layout_marginBottom="8dp" />
+                android:letterSpacing="0.15"
+                android:layout_marginBottom="10dp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="6dp">
+                android:layout_marginBottom="8dp">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="44dp"
                     android:text="Turning"
-                    android:textColor="#cccccc"
-                    android:textSize="13sp"
+                    android:textColor="#c9bda2"
+                    android:textSize="14sp"
                     android:gravity="center_vertical" />
                 <Spinner
                     android:id="@+id/vr_turning_spinner"
                     android:layout_width="0dp"
                     android:layout_weight="2"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="44dp"
+                    android:background="@drawable/lc_input"
+                    android:paddingLeft="12dp" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="6dp">
+                android:layout_marginBottom="8dp">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="44dp"
                     android:text="Resolution"
-                    android:textColor="#cccccc"
-                    android:textSize="13sp"
+                    android:textColor="#c9bda2"
+                    android:textSize="14sp"
                     android:gravity="center_vertical" />
                 <Spinner
                     android:id="@+id/vr_resolution_spinner"
                     android:layout_width="0dp"
                     android:layout_weight="2"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="44dp"
+                    android:background="@drawable/lc_input"
+                    android:paddingLeft="12dp" />
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="6dp">
+                android:layout_marginBottom="8dp">
                 <TextView
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="44dp"
                     android:text="Refresh rate"
-                    android:textColor="#cccccc"
-                    android:textSize="13sp"
+                    android:textColor="#c9bda2"
+                    android:textSize="14sp"
                     android:gravity="center_vertical" />
                 <Spinner
                     android:id="@+id/vr_refresh_spinner"
                     android:layout_width="0dp"
                     android:layout_weight="2"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="44dp"
+                    android:background="@drawable/lc_input"
+                    android:paddingLeft="12dp" />
             </LinearLayout>
 
             <LinearLayout
@@ -292,40 +303,35 @@
                 <TextView
                     android:layout_width="0dp"
                     android:layout_weight="1"
-                    android:layout_height="wrap_content"
+                    android:layout_height="44dp"
                     android:text="Left HUD"
-                    android:textColor="#cccccc"
-                    android:textSize="13sp"
+                    android:textColor="#c9bda2"
+                    android:textSize="14sp"
                     android:gravity="center_vertical" />
                 <Spinner
                     android:id="@+id/vr_hud_spinner"
                     android:layout_width="0dp"
                     android:layout_weight="2"
-                    android:layout_height="wrap_content" />
+                    android:layout_height="44dp"
+                    android:background="@drawable/lc_input"
+                    android:paddingLeft="12dp" />
             </LinearLayout>
 
         </LinearLayout>
-
-        <!-- ── SETTINGS ── -->
-        <Button
-            android:id="@+id/settings_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Settings"
-            android:textSize="13sp"
-            android:layout_marginBottom="12dp" />
 
         <!-- ── LAUNCH ── -->
         <Button
             android:id="@+id/launch_game_button"
             android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="LAUNCH"
-            android:textSize="18sp"
+            android:layout_height="62dp"
+            android:text="PLAY"
+            android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="#000000"
-            android:backgroundTint="#e6b800"
-            android:layout_marginBottom="8dp" />
+            android:letterSpacing="0.2"
+            android:textColor="#1a1409"
+            android:background="@drawable/lc_btn_primary"
+            android:stateListAnimator="@null"
+            android:layout_marginBottom="10dp" />
 
         <!-- ── STATUS ── -->
         <TextView
@@ -334,8 +340,21 @@
             android:layout_height="wrap_content"
             android:text=""
             android:textSize="12sp"
-            android:textColor="#ff9800"
-            android:gravity="center" />
+            android:textColor="#ff9d3f"
+            android:gravity="center"
+            android:layout_marginBottom="10dp" />
+
+        <!-- ── Engine settings link ── -->
+        <Button
+            android:id="@+id/settings_button"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:text="Advanced engine settings"
+            android:textAllCaps="false"
+            android:textSize="13sp"
+            android:textColor="#9d9077"
+            android:background="@android:color/transparent"
+            android:stateListAnimator="@null" />
 
     </LinearLayout>
 </ScrollView>

@@ -41,6 +41,7 @@ private const val PREF_SERVER_PORT = "tes3mp_server_port"
 private const val MODE_SP          = "singleplayer"
 private const val MODE_MP          = "multiplayer"
 private const val DEFAULT_PORT     = "25565"
+private const val PREF_NIRN_OFFERED = "nirn_preset_offered_v2"
 
 class LauncherActivity : AppCompatActivity() {
 
@@ -106,9 +107,11 @@ class LauncherActivity : AppCompatActivity() {
         modeGroup.setOnCheckedChangeListener { _, checkedId ->
             val isMP = (checkedId == R.id.radio_multiplayer)
             serverSection.visibility = if (isMP) View.VISIBLE else View.GONE
+            updateModeHint(isMP)
             prefs.edit().putString(PREF_MODE, if (isMP) MODE_MP else MODE_SP).apply()
             statusView.text = ""
         }
+        updateModeHint(modeGroup.checkedRadioButtonId == R.id.radio_multiplayer)
 
         updatePathDisplay()
 
@@ -134,6 +137,22 @@ class LauncherActivity : AppCompatActivity() {
         updatePathDisplay()
         launchInProgress = false
         setButtonsEnabled(true)
+
+        // One-time offer for already-configured installs (e.g. after an app update)
+        if (!prefs.getBoolean(PREF_NIRN_OFFERED, false)) {
+            val path = prefs.getString("game_files", "") ?: ""
+            if (path.isNotEmpty()) {
+                prefs.edit().putBoolean(PREF_NIRN_OFFERED, true).apply()
+                offerNirnPreset(GameInstaller(path).findDataFiles())
+            }
+        }
+    }
+
+    private fun updateModeHint(isMP: Boolean) {
+        findViewById<TextView>(R.id.mode_hint)?.text = if (isMP)
+            "TES3MP engine — join a dedicated server and play co-op."
+        else
+            "Vanilla OpenMW-VR engine — full quest and save compatibility."
     }
 
     // ── directory picker ──────────────────────────────────────────────
@@ -250,14 +269,16 @@ class LauncherActivity : AppCompatActivity() {
 
     // ── Project Nirn load-order preset ────────────────────────────────
 
-    /** Correct load order for the Project Nirn modpack (from its PC openmw.cfg). */
+    /** Correct load order for the Project Nirn modpack. */
     private fun offerNirnPreset(dataFiles: String) {
         if (!java.io.File(dataFiles, "Nirn_Core.esp").exists())
             return
         AlertDialog.Builder(this)
             .setTitle("Project Nirn detected")
-            .setMessage("Apply the recommended Project Nirn load order?\n" +
-                "(plugins, BSA archives and grass will be enabled and ordered)")
+            .setMessage("Apply the recommended Project Nirn load order?\n\n" +
+                "• 13 plugins (Morrowind … Nirn_Core.esp)\n" +
+                "• 8 BSA archives (Nirn_Pack 001–008)\n" +
+                "• grass plugin routed to groundcover")
             .setPositiveButton("Apply") { _, _ ->
                 applyNirnPreset(dataFiles)
                 statusView.text = "Project Nirn load order applied"
@@ -267,16 +288,15 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun applyNirnPreset(dataFiles: String) {
+        // Official Project Nirn load order.
+        // Plugins: the core set, in this exact sequence.
         val plugins = listOf(
             "Morrowind.esm", "Tribunal.esm", "Bloodmoon.esm", "GFM.esm",
             "Rebirth_Main.esm", "OAAB_Data.esm", "Tamriel_Data.esm", "TR_Mainland.esm",
             "Cyr_Main.esm", "Sky_Main.esm", "Wares-base.esm", "NOD_Core.esm",
-            "TDoO_Main.esm", "Nirn_Core.esp")
-        val archives = listOf(
-            "Nirn_Pack_001.bsa", "Nirn_Pack_002.bsa", "Nirn_Pack_003.bsa",
-            "Nirn_Pack_004.bsa", "Nirn_Pack_005.bsa", "Nirn_Pack_006.bsa",
-            "Nirn_Pack_HD_001.bsa", "Nirn_Pack_HD_002.bsa", "Nirn_Pack_HD_003.bsa",
-            "Nirn_Pack_PBR_001.bsa")
+            "Nirn_Core.esp")
+        // BSA archives: 001-005 mandatory, 006-008 enhanced textures/normal maps.
+        val archives = (1..8).map { "Nirn_Pack_%03d.bsa".format(it) }
         val grass = listOf("Nirn_Grass.omwaddon")
 
         val db = mods.ModsDatabaseOpenHelper.getInstance(this)
