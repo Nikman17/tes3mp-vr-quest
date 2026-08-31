@@ -26,6 +26,15 @@ fi
 # the TES3MP tree: its mwvr API generation differs (VRStageToWorldBinding vs
 # VRTrackingToWorldBinding) and does not compile against this tree.
 
+echo "--- 2. quest patch: request OpenXR 1.0 (Quest runtime rejects 1.1) ---"
+XRP=$SP/apps/openmw/mwvr/openxrplatform.cpp
+if grep -q 'apiVersion = XR_CURRENT_API_VERSION' "$XRP"; then
+    sed -i 's/apiVersion = XR_CURRENT_API_VERSION/apiVersion = XR_API_VERSION_1_0/' "$XRP"
+    echo "  patched: apiVersion -> XR_API_VERSION_1_0"
+else
+    grep -q 'XR_API_VERSION_1_0' "$XRP" && echo "  already patched"
+fi
+
 echo "--- 4. configure ---"
 mkdir -p "$BUILD"
 cd "$BUILD"

@@ -323,45 +323,14 @@ open class MainActivity : AppCompatActivity() {
      * Removes old and creates new files located in private application directories
      * (i.e. under getFilesDir(), or /data/data/.../files)
      */
-    private fun reinstallStaticFiles() {
-        // we store global "config" and "resources" under private files
+    private fun reinstallStaticFiles() = utils.StaticFiles.reinstall(this)
 
-        // wipe old version first
-        removeStaticFiles()
-
-        // copy in the new version; the two engines ship separate resource sets
-        // (TES3MP 0.47 vs vanilla openmw-vr), so extract the one for the active mode
-        val assetCopier = CopyFilesFromAssets(this)
-        val assetBase = if (isSinglePlayerMode()) "libopenmw-sp" else "libopenmw"
-        assetCopier.copy("$assetBase/resources", Constants.RESOURCES)
-        assetCopier.copy("$assetBase/openmw", Constants.GLOBAL_CONFIG)
-
-        // set up user config (if not present)
-        File(Constants.USER_CONFIG).mkdirs()
-        if (!File(Constants.USER_OPENMW_CFG).exists())
-            File(Constants.USER_OPENMW_CFG).writeText("# This is the user openmw.cfg. Feel free to modify it as you wish.\n")
-
-        // set version stamp
-        File(Constants.VERSION_STAMP).writeText(staticFilesStamp())
-    }
-
-    protected fun isSinglePlayerMode(): Boolean =
-        prefs.getString("tes3mp_mode", "singleplayer") != "multiplayer"
-
-    /** Redeploy static files when the app version OR the engine flavor changes. */
-    private fun staticFilesStamp(): String =
-        "${BuildConfig.VERSION_CODE}-${if (isSinglePlayerMode()) "sp" else "mp"}"
+    protected fun isSinglePlayerMode(): Boolean = utils.StaticFiles.isSinglePlayerMode(this)
 
     /**
      * Removes global static files, these include resources and config
      */
-    private fun removeStaticFiles() {
-        // remove version stamp so that reinstallStaticFiles is called during game launch
-        File(Constants.VERSION_STAMP).delete()
-
-        deleteRecursive(File(Constants.GLOBAL_CONFIG))
-        deleteRecursive(File(Constants.RESOURCES))
-    }
+    private fun removeStaticFiles() = utils.StaticFiles.remove()
 
     /**
      * Resets user config to default values by removing it
@@ -471,14 +440,7 @@ open class MainActivity : AppCompatActivity() {
         val th = Thread {
             try {
                 // Only reinstall static files if they are of a mismatched version/engine
-                try {
-                    val stamp = File(Constants.VERSION_STAMP).readText().trim()
-                    if (stamp != staticFilesStamp() || !hasRequiredStaticFiles()) {
-                        reinstallStaticFiles()
-                    }
-                } catch (e: Exception) {
-                    reinstallStaticFiles()
-                }
+                utils.StaticFiles.ensure(this)
 
                 val inst = GameInstaller(prefs.getString("game_files", "")!!)
 
@@ -568,25 +530,6 @@ open class MainActivity : AppCompatActivity() {
             }
         }
         th.start()
-    }
-
-    private fun hasRequiredStaticFiles(): Boolean {
-        val alchemyLayout = File(Constants.RESOURCES, "mygui/openmw_alchemy_window.layout")
-        val hasAlchemyFilterEdit = try {
-            alchemyLayout.exists() && alchemyLayout.readText().contains("name=\"FilterEdit\"")
-        } catch (e: IOException) {
-            false
-        }
-
-        return File(Constants.OPENMW_BASE_CFG).exists()
-            && File(Constants.DEFAULTS_BIN).exists()
-            && File(Constants.RESOURCES).exists()
-            && File(Constants.RESOURCES, "mygui/core_vr.xml").exists()
-            && File(Constants.RESOURCES, "mygui/openmw_layers_vr.xml").exists()
-            && File(Constants.RESOURCES, "mygui/openmw_hud_vr.layout").exists()
-            && hasAlchemyFilterEdit
-            && File(Constants.GLOBAL_CONFIG, "settings-overrides-vr.cfg").exists()
-            && File(Constants.GLOBAL_CONFIG, "xrcontrollersuggestions.xml").exists()
     }
 
     private fun validateRuntimePayload(): Boolean {

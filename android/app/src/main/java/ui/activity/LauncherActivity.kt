@@ -41,7 +41,8 @@ private const val PREF_SERVER_PORT = "tes3mp_server_port"
 private const val MODE_SP          = "singleplayer"
 private const val MODE_MP          = "multiplayer"
 private const val DEFAULT_PORT     = "25565"
-private const val PREF_NIRN_OFFERED = "nirn_preset_offered_v2"
+// Bumped when the preset contents change so users get re-offered once.
+private const val PREF_NIRN_OFFERED = "nirn_preset_offered_v3"
 
 class LauncherActivity : AppCompatActivity() {
 
@@ -300,7 +301,10 @@ class LauncherActivity : AppCompatActivity() {
         val grass = listOf("Nirn_Grass.omwaddon")
 
         val db = mods.ModsDatabaseOpenHelper.getInstance(this)
-        applyOrder(mods.ModType.Plugin, dataFiles, db, plugins, disable = grass)
+        // TDoO_Main.esm ships with the pack but is NOT in the official load
+        // order (and the server whitelist mirrors that list exactly).
+        applyOrder(mods.ModType.Plugin, dataFiles, db, plugins,
+            disable = grass + listOf("TDoO_Main.esm"))
         applyOrder(mods.ModType.Resource, dataFiles, db, archives)
         applyOrder(mods.ModType.Groundcover, dataFiles, db, grass)
         Log.i(TAG, "Project Nirn preset applied")

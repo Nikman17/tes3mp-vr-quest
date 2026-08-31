@@ -121,12 +121,42 @@ open class GameActivity : SDLActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Safety net: if this activity is entered without the launcher prep
+        // (e.g. VrShell crash-recovery relaunch), the deployed resources may
+        // still belong to the OTHER engine — redeploy before the engine boots.
+        // Under an MP engine a stale SP payload breaks the TES3MP version
+        // handshake ("Version mismatch!"), under an SP engine 0.47 shaders crash.
+        utils.StaticFiles.ensure(this)
         ensureNativeLibrariesLoaded()
+        bootstrapOpenXr()
         KeepScreenOn()
         window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         getPathToJni(filesDir.parent, Constants.USER_FILE_STORAGE)
         showControls()
         enforceImmersiveMode()
+    }
+
+    /**
+     * The vanilla SP engine (mmry lineage) expects the app to point the OpenXR
+     * loader at Meta's forward loader and call xrInitializeLoaderKHR via JNI
+     * before any OpenXR call. The TES3MP engine does this natively, so missing
+     * symbols there are fine (guarded by UnsatisfiedLinkError).
+     */
+    private fun bootstrapOpenXr() {
+        try {
+            val runtimeDir = java.io.File(filesDir, "openxr")
+            if (!runtimeDir.exists()) runtimeDir.mkdirs()
+            val runtimeJson = java.io.File(runtimeDir, "active_runtime.aarch64.json")
+            runtimeJson.writeText(
+                """{"file_format_version":"1.0.0","runtime":{"library_path":"libopenxr_forwardloader.so"}}""")
+            setOpenXrRuntimeJson(runtimeJson.absolutePath)
+            initOpenXRLoader()
+            Log.i("OpenMW", "OpenXR bootstrap: loader initialized (runtime json: ${runtimeJson.absolutePath})")
+        } catch (e: UnsatisfiedLinkError) {
+            Log.i("OpenMW", "OpenXR bootstrap: engine handles loader init natively (${e.message})")
+        } catch (e: Exception) {
+            Log.e("OpenMW", "OpenXR bootstrap failed", e)
+        }
     }
 
     override fun onResume() {
@@ -201,6 +231,10 @@ open class GameActivity : SDLActivity() {
     }
 
     private external fun getPathToJni(path_global: String, path_user: String)
+
+    private external fun initOpenXRLoader()
+
+    private external fun setOpenXrRuntimeJson(runtimeJsonPath: String)
 
     companion object {
         var mouseMode = MouseMode.Hybrid
