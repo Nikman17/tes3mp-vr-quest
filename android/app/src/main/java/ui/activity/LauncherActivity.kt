@@ -244,6 +244,76 @@ class LauncherActivity : AppCompatActivity() {
         updatePathDisplay()
         statusView.text = "Game data configured!"
         Log.d(TAG, "setupData: OK, path saved")
+
+        offerNirnPreset(inst.findDataFiles())
+    }
+
+    // ── Project Nirn load-order preset ────────────────────────────────
+
+    /** Correct load order for the Project Nirn modpack (from its PC openmw.cfg). */
+    private fun offerNirnPreset(dataFiles: String) {
+        if (!java.io.File(dataFiles, "Nirn_Core.esp").exists())
+            return
+        AlertDialog.Builder(this)
+            .setTitle("Project Nirn detected")
+            .setMessage("Apply the recommended Project Nirn load order?\n" +
+                "(plugins, BSA archives and grass will be enabled and ordered)")
+            .setPositiveButton("Apply") { _, _ ->
+                applyNirnPreset(dataFiles)
+                statusView.text = "Project Nirn load order applied"
+            }
+            .setNegativeButton("Skip") { _, _ -> }
+            .show()
+    }
+
+    private fun applyNirnPreset(dataFiles: String) {
+        val plugins = listOf(
+            "Morrowind.esm", "Tribunal.esm", "Bloodmoon.esm", "GFM.esm",
+            "Rebirth_Main.esm", "OAAB_Data.esm", "Tamriel_Data.esm", "TR_Mainland.esm",
+            "Cyr_Main.esm", "Sky_Main.esm", "Wares-base.esm", "NOD_Core.esm",
+            "TDoO_Main.esm", "Nirn_Core.esp")
+        val archives = listOf(
+            "Nirn_Pack_001.bsa", "Nirn_Pack_002.bsa", "Nirn_Pack_003.bsa",
+            "Nirn_Pack_004.bsa", "Nirn_Pack_005.bsa", "Nirn_Pack_006.bsa",
+            "Nirn_Pack_HD_001.bsa", "Nirn_Pack_HD_002.bsa", "Nirn_Pack_HD_003.bsa",
+            "Nirn_Pack_PBR_001.bsa")
+        val grass = listOf("Nirn_Grass.omwaddon")
+
+        val db = mods.ModsDatabaseOpenHelper.getInstance(this)
+        applyOrder(mods.ModType.Plugin, dataFiles, db, plugins, disable = grass)
+        applyOrder(mods.ModType.Resource, dataFiles, db, archives)
+        applyOrder(mods.ModType.Groundcover, dataFiles, db, grass)
+        Log.i(TAG, "Project Nirn preset applied")
+    }
+
+    /**
+     * Enables [wanted] files (that exist) in the given order at the top of the list;
+     * everything else keeps its relative order below. [disable] entries are force-disabled
+     * (e.g. the grass plugin must load via groundcover=, not content=).
+     */
+    private fun applyOrder(type: mods.ModType, dataFiles: String,
+                           db: mods.ModsDatabaseOpenHelper,
+                           wanted: List<String>, disable: List<String> = emptyList()) {
+        val collection = mods.ModsCollection(type, dataFiles, db)
+        var order = 0
+        for (name in wanted) {
+            val mod = collection.mods.find { it.filename == name } ?: continue
+            mod.enabled = true
+            mod.order = order++
+            mod.dirty = true
+        }
+        collection.mods
+            .filter { it.filename !in wanted }
+            .sortedBy { it.order }
+            .forEach { mod ->
+                mod.order = order++
+                if (mod.filename in disable && mod.enabled) mod.enabled = false
+                mod.dirty = true
+            }
+        collection.mods
+            .filter { it.filename in disable }
+            .forEach { if (it.enabled) { it.enabled = false; it.dirty = true } }
+        collection.update()
     }
 
     // ── launch ────────────────────────────────────────────────────────
@@ -267,6 +337,9 @@ class LauncherActivity : AppCompatActivity() {
                 return
             }
             writeMultiplayerCfg(ip, serverPortEdit.text.toString().trim().ifEmpty { DEFAULT_PORT })
+        } else if (!java.io.File(applicationInfo.nativeLibraryDir, "libopenmw-sp.so").exists()) {
+            statusView.text = "Singleplayer engine is missing from this build — try Multiplayer"
+            return
         }
         // Singleplayer runs the vanilla OpenMW-VR engine (libopenmw-sp.so):
         // full quest/script compatibility, no networking layer, no server needed.

@@ -33,6 +33,26 @@ for f in openxrplatform.cpp openxrswapchainimage.cpp vrframebuffer.cpp vrframebu
     echo "  $f"
 done
 
+echo "--- 3b. g_viewer hook for android_main (surface lifecycle) ---"
+ENG=$SP/apps/openmw/engine.cpp
+if ! grep -q 'g_viewer' "$ENG"; then
+    python3 - "$ENG" << 'PYEOF'
+import sys
+p = sys.argv[1]
+src = open(p, encoding="utf-8").read()
+a1 = "#include <osgViewer/ViewerEventHandlers>\n"
+assert src.count(a1) == 1
+src = src.replace(a1, a1 + "#include <osgViewer/Viewer>\n\n#ifdef ANDROID\nosg::ref_ptr<osgViewer::Viewer> g_viewer;\n#endif\n")
+a2 = "    mViewer = new osgViewer::Viewer;\n"
+assert src.count(a2) == 1
+src = src.replace(a2, a2 + "#ifdef ANDROID\n    g_viewer = mViewer;\n#endif\n")
+open(p, "w", encoding="utf-8", newline="\n").write(src)
+print("engine.cpp: g_viewer added")
+PYEOF
+else
+    echo "  already present"
+fi
+
 echo "--- 4. configure ---"
 mkdir -p "$BUILD"
 cd "$BUILD"
