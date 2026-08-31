@@ -42,7 +42,7 @@ private const val MODE_SP          = "singleplayer"
 private const val MODE_MP          = "multiplayer"
 private const val DEFAULT_PORT     = "25565"
 // Bumped when the preset contents change so users get re-offered once.
-private const val PREF_NIRN_OFFERED = "nirn_preset_offered_v3"
+private const val PREF_NIRN_OFFERED = "nirn_preset_offered_v4"
 
 class LauncherActivity : AppCompatActivity() {
 
@@ -277,8 +277,8 @@ class LauncherActivity : AppCompatActivity() {
         AlertDialog.Builder(this)
             .setTitle("Project Nirn detected")
             .setMessage("Apply the recommended Project Nirn load order?\n\n" +
-                "• 13 plugins (Morrowind … Nirn_Core.esp)\n" +
-                "• 8 BSA archives (Nirn_Pack 001–008)\n" +
+                "• 14 plugins (Morrowind … Nirn_Core.esp)\n" +
+                "• 10 BSA archives (001–006, HD, PBR)\n" +
                 "• grass plugin routed to groundcover")
             .setPositiveButton("Apply") { _, _ ->
                 applyNirnPreset(dataFiles)
@@ -289,22 +289,22 @@ class LauncherActivity : AppCompatActivity() {
     }
 
     private fun applyNirnPreset(dataFiles: String) {
-        // Official Project Nirn load order.
-        // Plugins: the core set, in this exact sequence.
+        // Official Project Nirn load order (14 plugins, exact sequence).
         val plugins = listOf(
             "Morrowind.esm", "Tribunal.esm", "Bloodmoon.esm", "GFM.esm",
             "Rebirth_Main.esm", "OAAB_Data.esm", "Tamriel_Data.esm", "TR_Mainland.esm",
             "Cyr_Main.esm", "Sky_Main.esm", "Wares-base.esm", "NOD_Core.esm",
-            "Nirn_Core.esp")
-        // BSA archives: 001-005 mandatory, 006-008 enhanced textures/normal maps.
-        val archives = (1..8).map { "Nirn_Pack_%03d.bsa".format(it) }
+            "TDoO_Main.esm", "Nirn_Core.esp")
+        // BSA archives: 001-006 mandatory, then HD texture/normal-map + PBR packs.
+        val archives = listOf(
+            "Nirn_Pack_001.bsa", "Nirn_Pack_002.bsa", "Nirn_Pack_003.bsa",
+            "Nirn_Pack_004.bsa", "Nirn_Pack_005.bsa", "Nirn_Pack_006.bsa",
+            "Nirn_Pack_HD_001.bsa", "Nirn_Pack_HD_002.bsa", "Nirn_Pack_HD_003.bsa",
+            "Nirn_Pack_PBR_001.bsa")
         val grass = listOf("Nirn_Grass.omwaddon")
 
         val db = mods.ModsDatabaseOpenHelper.getInstance(this)
-        // TDoO_Main.esm ships with the pack but is NOT in the official load
-        // order (and the server whitelist mirrors that list exactly).
-        applyOrder(mods.ModType.Plugin, dataFiles, db, plugins,
-            disable = grass + listOf("TDoO_Main.esm"))
+        applyOrder(mods.ModType.Plugin, dataFiles, db, plugins, disable = grass)
         applyOrder(mods.ModType.Resource, dataFiles, db, archives)
         applyOrder(mods.ModType.Groundcover, dataFiles, db, grass)
         Log.i(TAG, "Project Nirn preset applied")
