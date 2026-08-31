@@ -40,14 +40,15 @@ if [ -n "$OPENXR_LOADER" ]; then
     echo "    libopenxr_loader.so"
 fi
 
-# Vanilla singleplayer engine (built via .logs/build_sp_engine.sh -> openmw-sp-build)
+# Vanilla singleplayer engine (built via build-sp-engine.sh -> openmw-sp-build).
+# IMPORTANT: the vanilla tree has two game targets; only openmw_vr is a VR build.
 SP_BUILD="$BUILD_DIR/openmw-sp-build"
-SP_SO=$(find "$SP_BUILD" -maxdepth 2 \( -name 'libopenmw.so' -o -name 'libtes3mp.so' \) 2>/dev/null | head -n 1)
+SP_SO=$(find "$SP_BUILD" -maxdepth 2 -name 'libopenmw_vr.so' 2>/dev/null | head -n 1)
 if [ -n "$SP_SO" ]; then
     cp "$SP_SO" "$JNIDIR/libopenmw-sp.so"
     echo "    $(basename "$SP_SO") -> libopenmw-sp.so"
 else
-    echo "    WARNING: vanilla SP engine not found (singleplayer mode will not launch)"
+    echo "    WARNING: vanilla SP engine (libopenmw_vr.so) not found — singleplayer will refuse to launch"
 fi
 
 # Core deps (libGL.so = gl4es, required by GameActivity.loadLibraries)

@@ -76,9 +76,10 @@ cd "$BUILD"
     -DBUILD_OPENMW=ON 2>&1 | tail -4
 
 echo "--- 5. build ---"
-"$WRAP" make -j3 openmw 2>&1 | tail -6 || "$WRAP" make -j3 tes3mp 2>&1 | tail -6
+# NOTE: this tree has TWO game targets: 'openmw' (flatscreen!) and 'openmw_vr'
+# (compiled with USE_OPENXR + GLES/Android platform switches). We want VR.
+"$WRAP" make -j3 openmw_vr 2>&1 | tail -6
 
 echo "--- result ---"
-find "$BUILD" -maxdepth 2 -name 'lib*.so' -newer "$BUILD/CMakeCache.txt" 2>/dev/null | head -3
-find "$BUILD" -maxdepth 2 \( -name 'libopenmw.so' -o -name 'libtes3mp.so' \) -exec ls -la {} \;
+find "$BUILD" -maxdepth 2 -name 'libopenmw_vr.so' -exec ls -la {} \;
 echo "SP ENGINE DONE"
