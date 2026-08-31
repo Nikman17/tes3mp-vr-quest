@@ -219,6 +219,8 @@ open class MainActivity : AppCompatActivity() {
         }
 
         val intent = Intent(this@MainActivity, GameActivity::class.java)
+        // VrShell hosts the activity immersively only when the VR category is present
+        intent.addCategory("com.oculus.intent.category.VR")
         this@MainActivity.startActivity(intent)
         // Ensure VrEntryActivity does not remain in the back stack and re-trigger startup.
         finish()

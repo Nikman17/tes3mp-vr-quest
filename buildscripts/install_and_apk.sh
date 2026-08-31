@@ -22,11 +22,15 @@ echo "==> Installing shared libraries..."
 JNIDIR="$ANDROID/app/src/main/jniLibs/$ABI"
 rm -rf "$JNIDIR" && mkdir -p "$JNIDIR"
 
-# Main openmw/tes3mp shared lib
+STRIP="$NDK_HOME/arm64/bin/$NDK_TRIPLET-strip"
+
+# Main openmw/tes3mp shared lib.
+# strip -o: the unstripped engines are 450-530 MB; copying them through the
+# /mnt/c 9p mount OOMs the RAM-capped WSL VM, so strip directly to destination.
 OPENMW_SO=$(find "$BUILD_DIR/openmw-prefix/src/openmw-build" -name "libtes3mp.so" 2>/dev/null | head -n 1)
 if [ -n "$OPENMW_SO" ]; then
-    cp "$OPENMW_SO" "$JNIDIR/libopenmw.so"
-    echo "    libtes3mp.so -> libopenmw.so"
+    "$STRIP" -o "$JNIDIR/libopenmw.so" "$OPENMW_SO"
+    echo "    libtes3mp.so -> libopenmw.so (stripped)"
 else
     echo "ERROR: libtes3mp.so not found!"
     find "$BUILD_DIR/openmw-prefix/" -name "*.so" 2>/dev/null | head -10
@@ -45,8 +49,8 @@ fi
 SP_BUILD="$BUILD_DIR/openmw-sp-build"
 SP_SO=$(find "$SP_BUILD" -maxdepth 2 -name 'libopenmw_vr.so' 2>/dev/null | head -n 1)
 if [ -n "$SP_SO" ]; then
-    cp "$SP_SO" "$JNIDIR/libopenmw-sp.so"
-    echo "    $(basename "$SP_SO") -> libopenmw-sp.so"
+    "$STRIP" -o "$JNIDIR/libopenmw-sp.so" "$SP_SO"
+    echo "    $(basename "$SP_SO") -> libopenmw-sp.so (stripped)"
 else
     echo "    WARNING: vanilla SP engine (libopenmw_vr.so) not found — singleplayer will refuse to launch"
 fi

@@ -74,19 +74,27 @@
             android:configChanges="screenSize|orientation|keyboardHidden"/>
 
         <!-- Main VR game activity (SDL + OpenXR), runs immersive on Quest.
-             NOTE: intentionally NO MAIN/VR intent-filter — otherwise the Quest
-             library launches the game directly, skipping the launcher panel.
-             It is started explicitly by VrEntryActivity (and adb). -->
+             The com.oculus.intent.category.VR category is REQUIRED for VrShell
+             to host this activity immersively: without it the game is hosted
+             as a flat 2D panel and the OpenXR session never leaves VISIBLE
+             (never reaches FOCUSED). The custom (non-MAIN) action keeps the
+             Quest library from launching the game directly, so the 2D
+             launcher panel remains the user entry point. -->
         <activity
             android:name="ui.activity.GameActivity"
             android:exported="true"
-            android:theme="@style/MyTheme"
+            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
             android:launchMode="singleTask"
             android:resizeableActivity="false"
             android:excludeFromRecents="true"
             android:screenOrientation="landscape"
             android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|uiMode">
             <meta-data android:name="com.oculus.vr.mode" android:value="vr_only" />
+            <intent-filter>
+                <action android:name="xyz.morrowind.tes3mpvr.action.PLAY" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="com.oculus.intent.category.VR" />
+            </intent-filter>
         </activity>
 
         <!-- TES3MP Server Browser -->

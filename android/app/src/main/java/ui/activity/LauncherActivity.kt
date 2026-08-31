@@ -131,6 +131,37 @@ class LauncherActivity : AppCompatActivity() {
                 checkAndLaunch()
             }
         }
+
+        handleAutomationExtras(intent)
+    }
+
+    /**
+     * ADB automation hooks (used for headless testing over `adb shell am start`):
+     *   --ez apply_nirn true      apply the Project Nirn load-order preset
+     *   --es set_mode sp|mp       select the engine mode
+     *   --es set_ip <addr>        fill in (and persist) the server IP
+     *   --es set_port <port>      fill in (and persist) the server port
+     *   --ez auto_play true       press PLAY after processing the above
+     */
+    private fun handleAutomationExtras(i: Intent?) {
+        i ?: return
+        if (i.getBooleanExtra("apply_nirn", false)) {
+            val path = prefs.getString("game_files", "") ?: ""
+            if (path.isNotEmpty()) {
+                applyNirnPreset(GameInstaller(path).findDataFiles())
+                statusView.text = "Project Nirn load order applied"
+            }
+        }
+        when (i.getStringExtra("set_mode")) {
+            "sp" -> modeGroup.check(R.id.radio_singleplayer)
+            "mp" -> modeGroup.check(R.id.radio_multiplayer)
+        }
+        i.getStringExtra("set_ip")?.let { serverIpEdit.setText(it) }
+        i.getStringExtra("set_port")?.let { serverPortEdit.setText(it) }
+        if (i.hasExtra("set_ip") || i.hasExtra("set_port"))
+            saveServerPrefs()
+        if (i.getBooleanExtra("auto_play", false))
+            launchBtn.post { launchBtn.performClick() }
     }
 
     override fun onResume() {
