@@ -93,8 +93,10 @@ android/.gradle/
 android/app/build/
 android/app/src/main/jniLibs/
 android/app/src/main/assets/libopenmw/
+android/app/src/main/assets/libopenmw-sp/
 android/local.properties
 buildscripts/openmw-vr/
+buildscripts/openmw-vr-sp/
 buildscripts/downloads/
 buildscripts/prefix/
 buildscripts/build/
