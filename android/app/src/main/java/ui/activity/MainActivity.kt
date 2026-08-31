@@ -329,10 +329,12 @@ open class MainActivity : AppCompatActivity() {
         // wipe old version first
         removeStaticFiles()
 
-        // copy in the new version
+        // copy in the new version; the two engines ship separate resource sets
+        // (TES3MP 0.47 vs vanilla openmw-vr), so extract the one for the active mode
         val assetCopier = CopyFilesFromAssets(this)
-        assetCopier.copy("libopenmw/resources", Constants.RESOURCES)
-        assetCopier.copy("libopenmw/openmw", Constants.GLOBAL_CONFIG)
+        val assetBase = if (isSinglePlayerMode()) "libopenmw-sp" else "libopenmw"
+        assetCopier.copy("$assetBase/resources", Constants.RESOURCES)
+        assetCopier.copy("$assetBase/openmw", Constants.GLOBAL_CONFIG)
 
         // set up user config (if not present)
         File(Constants.USER_CONFIG).mkdirs()
@@ -340,8 +342,15 @@ open class MainActivity : AppCompatActivity() {
             File(Constants.USER_OPENMW_CFG).writeText("# This is the user openmw.cfg. Feel free to modify it as you wish.\n")
 
         // set version stamp
-        File(Constants.VERSION_STAMP).writeText(BuildConfig.VERSION_CODE.toString())
+        File(Constants.VERSION_STAMP).writeText(staticFilesStamp())
     }
+
+    protected fun isSinglePlayerMode(): Boolean =
+        prefs.getString("tes3mp_mode", "singleplayer") != "multiplayer"
+
+    /** Redeploy static files when the app version OR the engine flavor changes. */
+    private fun staticFilesStamp(): String =
+        "${BuildConfig.VERSION_CODE}-${if (isSinglePlayerMode()) "sp" else "mp"}"
 
     /**
      * Removes global static files, these include resources and config
@@ -461,10 +470,10 @@ open class MainActivity : AppCompatActivity() {
 
         val th = Thread {
             try {
-                // Only reinstall static files if they are of a mismatched version
+                // Only reinstall static files if they are of a mismatched version/engine
                 try {
                     val stamp = File(Constants.VERSION_STAMP).readText().trim()
-                    if (stamp.toInt() != BuildConfig.VERSION_CODE || !hasRequiredStaticFiles()) {
+                    if (stamp != staticFilesStamp() || !hasRequiredStaticFiles()) {
                         reinstallStaticFiles()
                     }
                 } catch (e: Exception) {
@@ -581,12 +590,14 @@ open class MainActivity : AppCompatActivity() {
     }
 
     private fun validateRuntimePayload(): Boolean {
-        val hasOpenmwLib = File(applicationInfo.nativeLibraryDir, "libopenmw.so").exists()
-        Log.d(TAG, "validateRuntimePayload: nativeLibDir=${applicationInfo.nativeLibraryDir}, hasOpenmwLib=$hasOpenmwLib")
+        val lib = if (isSinglePlayerMode()) "libopenmw-sp.so" else "libopenmw.so"
+        val assetBase = if (isSinglePlayerMode()) "libopenmw-sp" else "libopenmw"
+        val hasOpenmwLib = File(applicationInfo.nativeLibraryDir, lib).exists()
+        Log.d(TAG, "validateRuntimePayload: nativeLibDir=${applicationInfo.nativeLibraryDir}, lib=$lib, present=$hasOpenmwLib")
 
         val hasBundledOpenmw = try {
-            val openmwConfig = assets.list("libopenmw/openmw") ?: emptyArray()
-            val openmwResources = assets.list("libopenmw/resources") ?: emptyArray()
+            val openmwConfig = assets.list("$assetBase/openmw") ?: emptyArray()
+            val openmwResources = assets.list("$assetBase/resources") ?: emptyArray()
             Log.d(TAG, "validateRuntimePayload: openmwConfig.size=${openmwConfig.size}, openmwResources.size=${openmwResources.size}")
             openmwConfig.isNotEmpty() && openmwResources.isNotEmpty()
         } catch (e: IOException) {

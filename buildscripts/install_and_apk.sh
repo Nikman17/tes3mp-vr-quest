@@ -101,6 +101,35 @@ for f in settings-overrides-vr.cfg xrcontrollersuggestions.xml; do
 done
 echo "    Resources deployed to: $ASSETS_DST"
 
+# ---- Deploy SP (vanilla openmw-vr) resources ----
+# The SP engine is a different OpenMW generation: its shaders/mygui/defaults are
+# NOT interchangeable with the TES3MP 0.47 ones, so it gets its own asset space
+# (assets/libopenmw-sp), extracted by the app when Singleplayer mode is active.
+SP_ASSETS="$ANDROID/app/src/main/assets/libopenmw-sp"
+if [ -n "$SP_SO" ] && [ -d "$SP_BUILD/resources" ]; then
+    echo ""
+    echo "==> Deploying SP engine resources..."
+    rm -rf "$SP_ASSETS" && mkdir -p "$SP_ASSETS/openmw"
+    cp -r "$SP_BUILD/resources" "$SP_ASSETS/"
+    cp "$SP_BUILD/defaults.bin"         "$SP_ASSETS/openmw/" 2>/dev/null || true
+    cp "$SP_BUILD/gamecontrollerdb.txt" "$SP_ASSETS/openmw/" 2>/dev/null || true
+    if [ -f "$SP_BUILD/openmw.cfg" ]; then
+        grep -v "^data=" "$SP_BUILD/openmw.cfg" | grep -v "^data-local=" \
+            > "$SP_ASSETS/openmw/openmw.base.cfg"
+    fi
+    [ -f "$ANDROID/app/openmw.base.cfg" ] && \
+        cat "$ANDROID/app/openmw.base.cfg" >> "$SP_ASSETS/openmw/openmw.base.cfg"
+    SP_TREE="$BUILDSCRIPTS/openmw-vr-sp"
+    for f in settings-overrides-vr.cfg xrcontrollersuggestions.xml; do
+        [ -f "$SP_BUILD/$f" ] && cp "$SP_BUILD/$f" "$SP_ASSETS/openmw/"
+        [ -f "$SP_TREE/files/$f" ] && cp "$SP_TREE/files/$f" "$SP_ASSETS/openmw/"
+    done
+    echo "    SP resources deployed to: $SP_ASSETS"
+else
+    rm -rf "$SP_ASSETS"
+    echo "    (SP engine absent — skipping SP resources)"
+fi
+
 # ---- Gradle APK ----
 echo ""
 echo "==> Building APK with Gradle..."
