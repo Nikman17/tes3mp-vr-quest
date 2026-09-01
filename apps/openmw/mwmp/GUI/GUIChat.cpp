@@ -39,8 +39,8 @@ namespace mwmp
 
         mHistory->setNeedKeyFocus(false);
 
-        windowState = 0;
-        mCommandLine->setVisible(0);
+        windowState = CHAT_DISABLED;
+        mCommandLine->setVisible(false);
         delay = 3; // 3 sec.
     }
 
@@ -48,16 +48,15 @@ namespace mwmp
     {
         // Give keyboard focus to the combo box whenever the console is
         // turned on
-        setEditState(0);
-        windowState = CHAT_ENABLED;
+        setEditState(false);
+
+        if (windowState == CHAT_DISABLED)
+            windowState = CHAT_ENABLED;
     }
 
     void GUIChat::onClose()
     {
-        // Apparently, hidden widgets can retain key focus
-        // Remove for MyGUI 3.2.2
-        windowState = CHAT_DISABLED;
-        setEditState(0);
+        setEditState(false);
     }
 
     bool GUIChat::exit()
@@ -80,7 +79,7 @@ namespace mwmp
         if (cm.empty())
         {
             mCommandLine->setCaption("");
-            setEditState(0);
+            setEditState(false);
             return;
         }
 
@@ -97,7 +96,7 @@ namespace mwmp
         // It prevents the re-triggering of the acceptCommand() event for the same command
         // during the actual command execution
         mCommandLine->setCaption("");
-        setEditState(0);
+        setEditState(false);
         send (cm);
     }
 
@@ -114,7 +113,7 @@ namespace mwmp
 
     void GUIChat::print(const std::string &msg, const std::string &color)
     {
-        if (windowState == 2 && !isVisible())
+        if (windowState == CHAT_HIDDENMODE && !isVisible())
         {
             setVisible(true);
         }
@@ -173,14 +172,14 @@ namespace mwmp
         switch (windowState)
         {
             case CHAT_DISABLED:
-                this->mMainWidget->setVisible(false);
-                setEditState(0);
+                setVisible(false);
+                setEditState(false);
                 break;
             case CHAT_ENABLED:
-                this->mMainWidget->setVisible(true);
+                setVisible(true);
                 break;
             default: //CHAT_HIDDENMODE
-                this->mMainWidget->setVisible(true);
+                setVisible(true);
                 curTime = 0;
         }
     }
@@ -250,7 +249,7 @@ namespace mwmp
             if (curTime >= delay)
             {
                 setEditState(false);
-                this->mMainWidget->setVisible(false);
+                setVisible(false);
             }
         }
     }

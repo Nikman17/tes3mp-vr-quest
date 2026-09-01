@@ -122,6 +122,9 @@ namespace mwmp
         void playAnimation();
         void playSpeech();
 
+        bool sentVRSwingStart = false;
+        bool sentVRSwingEnd = false;
+
         MWWorld::Ptr getPlayerPtr();
 
     private:

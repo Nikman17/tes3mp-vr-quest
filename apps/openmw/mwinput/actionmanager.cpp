@@ -13,6 +13,7 @@
 */
 #include "../mwmp/Main.hpp"
 #include "../mwmp/LocalPlayer.hpp"
+#include "../mwmp/GUIController.hpp"
 /*
     End of tes3mp addition
 */
@@ -366,6 +367,19 @@ namespace MWInput
 
     void ActionManager::toggleMainMenu()
     {
+        /*
+            Start  of tes3mp addition
+
+            Don't allow the main menu to be toggled while TES3MP listboxes are open
+        */
+        if (MWBase::Environment::get().getWindowManager()->getMode() == mwmp::GUIController::GM_TES3MP_ListBox)
+        {
+            return;
+        }
+        /*
+            End of tes3mp addition
+        */
+
         if (MyGUI::InputManager::getInstance().isModalAny())
         {
             MWBase::Environment::get().getWindowManager()->exitCurrentModal();

@@ -17,6 +17,17 @@
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/player.hpp"
 
+/*
+    Start of tes3mp addition
+
+    Include additional headers for multiplayer purposes
+*/
+#include "../mwmp/Main.hpp"
+#include "../mwmp/LocalPlayer.hpp"
+/*
+    End of tes3mp addition
+*/
+
 #include "textinput.hpp"
 #include "race.hpp"
 #include "class.hpp"
@@ -329,6 +340,16 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->popGuiMode();
         MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Birth);
+
+        /*
+            Start of tes3mp addition
+
+            Decrease the character generation stage tracked for the LocalPlayer
+        */
+        mwmp::Main::get().getLocalPlayer()->charGenState.currentStage--;
+        /*
+            End of tes3mp addition
+        */
     }
 
     void CharacterCreation::onReviewActivateDialog(int parDialog)
@@ -381,6 +402,16 @@ namespace MWGui
         selectPickedClass();
 
         handleDialogDone(CSE_ClassChosen, GM_Birth);
+
+        /*
+            Start of tes3mp addition
+
+            Increase the character generation stage tracked for the LocalPlayer
+        */
+        mwmp::Main::get().getLocalPlayer()->charGenState.currentStage++;
+        /*
+            End of tes3mp addition
+        */
     }
 
     void CharacterCreation::onPickClassDialogBack()
@@ -411,6 +442,16 @@ namespace MWGui
                 break;
             case ClassChoiceDialog::Class_Back:
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Race);
+
+                /*
+                    Start of tes3mp addition
+
+                    Decrease the character generation stage tracked for the LocalPlayer
+                */
+                mwmp::Main::get().getLocalPlayer()->charGenState.currentStage--;
+                /*
+                    End of tes3mp addition
+                */
                 break;
 
         };
@@ -439,6 +480,16 @@ namespace MWGui
         }
 
         handleDialogDone(CSE_NameChosen, GM_Race);
+
+        /*
+            Start of tes3mp addition
+
+            Increase the character generation stage tracked for the LocalPlayer
+        */
+        mwmp::Main::get().getLocalPlayer()->charGenState.currentStage++;
+        /*
+            End of tes3mp addition
+        */
     }
 
     void CharacterCreation::selectRace()
@@ -477,6 +528,16 @@ namespace MWGui
         selectRace();
 
         handleDialogDone(CSE_RaceChosen, GM_Class);
+
+        /*
+            Start of tes3mp addition
+
+            Increase the character generation stage tracked for the LocalPlayer
+        */
+        mwmp::Main::get().getLocalPlayer()->charGenState.currentStage++;
+        /*
+            End of tes3mp addition
+        */
     }
 
     void CharacterCreation::selectBirthSign()
@@ -498,6 +559,16 @@ namespace MWGui
         selectBirthSign();
 
         handleDialogDone(CSE_BirthSignChosen, GM_Review);
+
+        /*
+            Start of tes3mp addition
+
+            Increase the character generation stage tracked for the LocalPlayer
+        */
+        mwmp::Main::get().getLocalPlayer()->charGenState.currentStage++;
+        /*
+            End of tes3mp addition
+        */
     }
 
     void CharacterCreation::onBirthSignDialogBack()
@@ -506,6 +577,16 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->popGuiMode();
         MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Class);
+
+        /*
+            Start of tes3mp addition
+
+            Decrease the character generation stage tracked for the LocalPlayer
+        */
+        mwmp::Main::get().getLocalPlayer()->charGenState.currentStage--;
+        /*
+            End of tes3mp addition
+        */
     }
 
     void CharacterCreation::selectCreatedClass()
@@ -547,6 +628,16 @@ namespace MWGui
         selectCreatedClass();
 
         handleDialogDone(CSE_ClassChosen, GM_Birth);
+
+        /*
+            Start of tes3mp addition
+
+            Increase the character generation stage tracked for the LocalPlayer
+        */
+        mwmp::Main::get().getLocalPlayer()->charGenState.currentStage++;
+        /*
+            End of tes3mp addition
+        */
     }
 
     void CharacterCreation::onCreateClassDialogBack()
@@ -556,6 +647,16 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->popGuiMode();
         MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Class);
+
+        /*
+            Start of tes3mp addition
+
+            Decrease the character generation stage tracked for the LocalPlayer
+        */
+        mwmp::Main::get().getLocalPlayer()->charGenState.currentStage--;
+        /*
+            End of tes3mp addition
+        */
     }
 
     void CharacterCreation::onClassQuestionChosen(int _index)
@@ -748,6 +849,16 @@ namespace MWGui
         selectGeneratedClass();
 
         handleDialogDone(CSE_ClassChosen, GM_Birth);
+
+        /*
+            Start of tes3mp addition
+
+            Increase the character generation stage tracked for the LocalPlayer
+        */
+        mwmp::Main::get().getLocalPlayer()->charGenState.currentStage++;
+        /*
+            End of tes3mp addition
+        */
     }
 
     CharacterCreation::~CharacterCreation()

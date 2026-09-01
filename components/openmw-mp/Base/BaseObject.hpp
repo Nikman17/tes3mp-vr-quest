@@ -26,7 +26,7 @@ namespace mwmp
 
     struct BaseObject
     {
-        std::string refId;
+        std::string refId = "";
         unsigned int refNum;
         unsigned int mpNum;
         int count;

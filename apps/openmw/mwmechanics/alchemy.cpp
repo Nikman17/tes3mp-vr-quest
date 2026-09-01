@@ -553,8 +553,20 @@ MWMechanics::Alchemy::Result MWMechanics::Alchemy::create (const std::string& na
     if (readyStatus == Result_NoEffects)
         removeIngredients();
 
+    /*
+        Start of tes3mp change (minor)
+
+        Set avoidSendingInventoryPackets to false again if this has not been a successful
+        potion creation
+    */
     if (readyStatus != Result_Success)
+    {
+        mwmp::Main::get().getLocalPlayer()->avoidSendingInventoryPackets = false;
         return readyStatus;
+    }
+    /*
+        End of tes3mp change (major)
+    */
 
     Result result = Result_RandomFailure;
     int brewedCount = 0;

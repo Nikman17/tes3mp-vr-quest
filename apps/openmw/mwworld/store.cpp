@@ -796,7 +796,7 @@ namespace MWWorld
     /*
         Start of tes3mp addition
 
-        Make it possible to override a cell record similarly to how
+        Make it possible to override a Cell record similarly to how
         other types of records can be overridden
     */
     ESM::Cell *Store<ESM::Cell>::override(const ESM::Cell &cell)
@@ -949,6 +949,37 @@ namespace MWWorld
 
         return RecordId("", isDeleted);
     }
+    /*
+        Start of tes3mp addition
+
+        Make it possible to override a Pathgrid record similarly to how
+        other types of records can be overridden
+    */
+    ESM::Pathgrid* Store<ESM::Pathgrid>::override(const ESM::Pathgrid& pathgrid)
+    {
+        bool interior = mCells->search(pathgrid.mCell) != nullptr;
+
+        // Try to overwrite existing record
+        if (interior)
+        {
+            std::pair<Interior::iterator, bool> ret = mInt.insert(std::make_pair(pathgrid.mCell, pathgrid));
+            if (!ret.second)
+                ret.first->second = pathgrid;
+
+            return &ret.first->second;
+        }
+        else
+        {
+            std::pair<Exterior::iterator, bool> ret = mExt.insert(std::make_pair(std::make_pair(pathgrid.mData.mX, pathgrid.mData.mY), pathgrid));
+            if (!ret.second)
+                ret.first->second = pathgrid;
+
+            return &ret.first->second;
+        }
+    }
+    /*
+        End of tes3mp addition
+    */
     size_t Store<ESM::Pathgrid>::getSize() const
     {
         return mInt.size() + mExt.size();

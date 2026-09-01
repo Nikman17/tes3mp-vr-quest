@@ -368,6 +368,18 @@ void RecordHelper::overrideRecord(const mwmp::CellRecord& record)
         world->unloadCell(finalData);
         world->clearCellStore(finalData);
         world->getModifiableStore().overrideRecord(finalData);
+
+        // Create a Pathgrid record for this new Cell based on the base Cell's Pathgrid
+        // Note: This has to be done after the new Cell has been created so the Pathgrid override
+        //       can correctly determine whether the Cell is an interior or an exterior
+        const ESM::Pathgrid* basePathgrid = world->getStore().get<ESM::Pathgrid>().search(record.baseId);
+
+        if (basePathgrid)
+        {
+            ESM::Pathgrid finalPathgrid = *basePathgrid;
+            finalPathgrid.mCell = recordData.mName;
+            world->getModifiableStore().overrideRecord(finalPathgrid);
+        }
     }
     else
     {

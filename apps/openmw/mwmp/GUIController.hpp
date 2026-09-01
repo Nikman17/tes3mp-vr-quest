@@ -45,10 +45,12 @@ namespace mwmp
 
         void showDialogList(const BasePlayer::GUIMessageBox &guiMessageBox);
 
-        bool getChatEditState();
-
         /// Returns 0 if there was no events
         bool pressedKey(int key);
+
+        void changeChatMode();
+
+        bool getChatEditState();
 
         void update(float dt);
 

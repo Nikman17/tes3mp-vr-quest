@@ -211,6 +211,11 @@ bool mwmp::GUIController::pressedKey(int key)
     return false;
 }
 
+void mwmp::GUIController::changeChatMode()
+{
+    mChat->pressedChatMode();
+}
+
 bool mwmp::GUIController::getChatEditState()
 {
     return mChat->editState;

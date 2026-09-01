@@ -1,5 +1,5 @@
-project(TES3MP_VR VERSION 0.9.0)
 cmake_minimum_required(VERSION 3.1.0)
+project(TES3MP_VR VERSION 0.9.0)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -234,7 +234,49 @@ endif()
 # Dependencies
 find_package(OpenGL REQUIRED)
 
-find_package(LZ4 REQUIRED)
+find_package(LZ4 QUIET)
+if(NOT LZ4_FOUND)
+    if(CMAKE_VERSION VERSION_LESS 3.11)
+        message(FATAL_ERROR
+            "LZ4 was not found and CMake ${CMAKE_VERSION} does not support "
+            "FetchContent. Please install LZ4 or upgrade to CMake >= 3.11.")
+    endif()
+    message(STATUS "LZ4 not found locally; fetching and building it")
+    include(FetchContent)
+    if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.24)
+        FetchContent_Declare(lz4
+            URL https://github.com/lz4/lz4/archive/v1.9.3.tar.gz
+            URL_HASH SHA256=030644df4611007ff7dc962d981f390361e6c97a34e5cbc393ddfbe019ffe2c1
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+    else()
+        FetchContent_Declare(lz4
+            URL https://github.com/lz4/lz4/archive/v1.9.3.tar.gz
+            URL_HASH SHA256=030644df4611007ff7dc962d981f390361e6c97a34e5cbc393ddfbe019ffe2c1
+        )
+    endif()
+    FetchContent_GetProperties(lz4)
+    if(NOT lz4_POPULATED)
+        FetchContent_Populate(lz4)
+        add_subdirectory(${lz4_SOURCE_DIR}/build/cmake ${lz4_BINARY_DIR})
+    endif()
+    if(NOT TARGET LZ4::LZ4)
+        set(_lz4_fetched_target "")
+        if(TARGET lz4_static)
+            set(_lz4_fetched_target lz4_static)
+        elseif(TARGET lz4)
+            set(_lz4_fetched_target lz4)
+        else()
+            message(FATAL_ERROR
+                "Fetched LZ4 did not create an expected target (lz4_static or lz4).")
+        endif()
+        add_library(LZ4::LZ4 INTERFACE IMPORTED)
+        target_link_libraries(LZ4::LZ4 INTERFACE ${_lz4_fetched_target})
+        target_include_directories(LZ4::LZ4 INTERFACE
+            "$<BUILD_INTERFACE:${lz4_SOURCE_DIR}/lib>")
+        unset(_lz4_fetched_target)
+    endif()
+endif()
 
 if (USE_QT)
     find_package(Qt5Core 5.9 REQUIRED) # Temporary adjustment for TES3MP CI

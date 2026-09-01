@@ -19,7 +19,7 @@ namespace mwmp
             hasStatsDynamicData = false;
         }
 
-        std::string refId;
+        std::string refId = "";
         unsigned int refNum;
         unsigned int mpNum;
 

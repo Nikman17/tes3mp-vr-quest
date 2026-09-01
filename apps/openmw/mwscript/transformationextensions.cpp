@@ -12,6 +12,7 @@
 #include "../mwmp/LocalPlayer.hpp"
 #include "../mwmp/PlayerList.hpp"
 #include "../mwmp/ObjectList.hpp"
+#include "../mwmp/CellController.hpp"
 #include "../mwmp/ScriptController.hpp"
 /*
     End of tes3mp addition
@@ -443,9 +444,51 @@ namespace MWScript
                     }
                     if(store)
                     {
+                        /*
+                            Start of tes3mp addition
+
+                            Track the original cell of this object in case we need to use it when sending a packet
+                        */
+                        ESM::Cell originalCell = *ptr.getCell()->getCell();
+                        /*
+                            End of tes3mp addition
+                        */
+
                         MWWorld::Ptr base = ptr;
                         ptr = MWBase::Environment::get().getWorld()->moveObject(ptr,store,x,y,z);
                         dynamic_cast<MWScript::InterpreterContext&>(runtime.getContext()).updatePtr(base,ptr);
+
+                        /*
+                            Start of tes3mp addition
+
+                            Send ActorCellChange packets when actors are moved here, regardless of whether we're
+                            the cell authority or not; the server can decide if it wants to comply with them
+                        */
+                        if (ptr.getClass().isActor() && !mwmp::Main::get().getCellController()->isSameCell(originalCell, *store->getCell()))
+                        {
+                            mwmp::BaseActor baseActor;
+                            baseActor.refNum = ptr.getCellRef().getRefNum().mIndex;
+                            baseActor.mpNum = ptr.getCellRef().getMpNum();
+                            baseActor.cell = *store->getCell();
+                            baseActor.position = ptr.getRefData().getPosition();
+                            baseActor.isFollowerCellChange = true;
+
+                            mwmp::ActorList* actorList = mwmp::Main::get().getNetworking()->getActorList();
+                            actorList->reset();
+                            actorList->cell = originalCell;
+
+                            LOG_MESSAGE_SIMPLE(TimedLog::LOG_INFO, "Sending ID_ACTOR_CELL_CHANGE about %s %i-%i to server",
+                                ptr.getCellRef().getRefId().c_str(), baseActor.refNum, baseActor.mpNum);
+
+                            LOG_APPEND(TimedLog::LOG_INFO, "- Moved from %s to %s", actorList->cell.getDescription().c_str(),
+                                baseActor.cell.getDescription().c_str());
+
+                            actorList->addCellChangeActor(baseActor);
+                            actorList->sendCellChangeActors();
+                        }
+                        /*
+                            End of tes3mp addition
+                        */
 
                         float ax = ptr.getRefData().getPosition().rot[0];
                         float ay = ptr.getRefData().getPosition().rot[1];

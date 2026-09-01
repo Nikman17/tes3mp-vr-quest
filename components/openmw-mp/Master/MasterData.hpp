@@ -77,7 +77,7 @@ struct QueryData
     const static int maxRules = 128;
     const static int maxUserRules = maxRules - predefinedRules;
     const static int maxPlayers = 100; // will shown only maxPlayers players
-    const static int maxPlugins = 256;
+    const static int maxPlugins = 1000;
     const static int maxStringLength = 256;
 };
 

@@ -165,6 +165,22 @@
                 android:textColor="#8d8069"
                 android:layout_marginTop="10dp" />
 
+            <EditText
+                android:id="@+id/character_name_edit"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="Character name (skips typing in VR)"
+                android:textColor="#f0e8d4"
+                android:textColorHint="#6d6250"
+                android:textSize="14sp"
+                android:inputType="textPersonName"
+                android:maxLines="1"
+                android:imeOptions="actionDone"
+                android:background="@drawable/lc_input"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginTop="12dp" />
+
             <!-- Server fields (multiplayer only) -->
             <LinearLayout
                 android:id="@+id/server_section"

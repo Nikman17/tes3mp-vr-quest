@@ -20,9 +20,9 @@ namespace mwmp
         void setChecksums(PluginContainer *checksums);
     private:
         PluginContainer *checksums;
-        const static uint32_t maxPlugins = 256;
+        const static uint32_t maxPlugins = 1000;
         const static uint32_t pluginNameMaxLength = 256;
-        const static uint32_t maxHashes = 16;
+        const static uint32_t maxHashes = 50;
     };
 }
 

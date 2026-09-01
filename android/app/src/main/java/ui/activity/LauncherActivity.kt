@@ -38,6 +38,7 @@ private const val REQ_PICK_DIR     = 1001
 private const val PREF_MODE        = "tes3mp_mode"
 private const val PREF_SERVER_IP   = "tes3mp_server_ip"
 private const val PREF_SERVER_PORT = "tes3mp_server_port"
+private const val PREF_CHAR_NAME   = "character_name"
 private const val MODE_SP          = "singleplayer"
 private const val MODE_MP          = "multiplayer"
 private const val DEFAULT_PORT     = "25565"
@@ -59,6 +60,7 @@ class LauncherActivity : AppCompatActivity() {
     private lateinit var serverSection: LinearLayout
     private lateinit var serverIpEdit:  EditText
     private lateinit var serverPortEdit:EditText
+    private lateinit var charNameEdit:  EditText
     private lateinit var vrTurning:     Spinner
     private lateinit var vrResolution:  Spinner
     private lateinit var vrRefresh:     Spinner
@@ -104,6 +106,8 @@ class LauncherActivity : AppCompatActivity() {
         restoreMode()
         serverIpEdit.setText(prefs.getString(PREF_SERVER_IP, ""))
         serverPortEdit.setText(prefs.getString(PREF_SERVER_PORT, DEFAULT_PORT))
+        charNameEdit = findViewById(R.id.character_name_edit)
+        charNameEdit.setText(prefs.getString(PREF_CHAR_NAME, ""))
 
         modeGroup.setOnCheckedChangeListener { _, checkedId ->
             val isMP = (checkedId == R.id.radio_multiplayer)
@@ -158,7 +162,8 @@ class LauncherActivity : AppCompatActivity() {
         }
         i.getStringExtra("set_ip")?.let { serverIpEdit.setText(it) }
         i.getStringExtra("set_port")?.let { serverPortEdit.setText(it) }
-        if (i.hasExtra("set_ip") || i.hasExtra("set_port"))
+        i.getStringExtra("set_name")?.let { charNameEdit.setText(it) }
+        if (i.hasExtra("set_ip") || i.hasExtra("set_port") || i.hasExtra("set_name"))
             saveServerPrefs()
         if (i.getBooleanExtra("auto_play", false))
             launchBtn.post { launchBtn.performClick() }
@@ -483,6 +488,10 @@ class LauncherActivity : AppCompatActivity() {
             "left hand hud position = $hudPos"
         )
 
+        val charName = prefs.getString(PREF_CHAR_NAME, "")!!.trim()
+        val generalKeys = listOf("player name")
+        val generalLines = if (charName.isEmpty()) emptyList() else listOf("player name = $charName")
+
         val targets = listOf(
             java.io.File(Environment.getExternalStorageDirectory(), "tes3mpvr/config/settings.cfg"),
             java.io.File(filesDir, "config/settings.cfg")
@@ -490,21 +499,23 @@ class LauncherActivity : AppCompatActivity() {
         for (f in targets) {
             try {
                 f.parentFile?.mkdirs()
-                val kept = (if (f.exists()) f.readLines() else emptyList())
+                var kept = (if (f.exists()) f.readLines() else emptyList())
                     .filter { line ->
                         val t = line.trim()
-                        managedKeys.none { k -> t.startsWith("$k =") || t.startsWith("$k=") }
+                        (managedKeys + generalKeys).none { k -> t.startsWith("$k =") || t.startsWith("$k=") }
                     }
                 val out = StringBuilder()
                 if (kept.none { it.trim() == "[VR]" }) {
-                    kept.forEach { out.append(it).append('\n') }
-                    out.append("[VR]\n")
-                    ourLines.forEach { out.append(it).append('\n') }
-                } else {
-                    for (line in kept) {
-                        out.append(line).append('\n')
-                        if (line.trim() == "[VR]")
-                            ourLines.forEach { out.append(it).append('\n') }
+                    kept = kept + listOf("[VR]")
+                }
+                if (generalLines.isNotEmpty() && kept.none { it.trim() == "[General]" }) {
+                    kept = listOf("[General]") + kept
+                }
+                for (line in kept) {
+                    out.append(line).append('\n')
+                    when (line.trim()) {
+                        "[VR]" -> ourLines.forEach { out.append(it).append('\n') }
+                        "[General]" -> generalLines.forEach { out.append(it).append('\n') }
                     }
                 }
                 f.writeText(out.toString())
@@ -562,6 +573,7 @@ class LauncherActivity : AppCompatActivity() {
         prefs.edit()
             .putString(PREF_SERVER_IP,   serverIpEdit.text.toString().trim())
             .putString(PREF_SERVER_PORT, serverPortEdit.text.toString().trim().ifEmpty { DEFAULT_PORT })
+            .putString(PREF_CHAR_NAME,   charNameEdit.text.toString().trim())
             .apply()
     }
 

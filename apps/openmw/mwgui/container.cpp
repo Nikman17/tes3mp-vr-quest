@@ -301,27 +301,33 @@ namespace MWGui
         /*
             Start of tes3mp addition
 
-            Trigger crimes related to the attempted taking of these items, if applicable
-
             Send an ID_CONTAINER packet every time the Take All button is used on
             a container
         */
-        for (size_t i = 0; i < mModel->getItemCount(); ++i)
-        {
-            const ItemStack& item = mModel->getItem(i);
-
-            if (!onTakeItem(item, item.mCount))
-                break;
-        }
-
         mwmp::ObjectList *objectList = mwmp::Main::get().getNetworking()->getObjectList();
         objectList->reset();
         objectList->packetOrigin = mwmp::CLIENT_GAMEPLAY;
         objectList->cell = *mPtr.getCell()->getCell();
         objectList->action = mwmp::BaseObjectList::REMOVE;
         objectList->containerSubAction = mwmp::BaseObjectList::TAKE_ALL;
-        objectList->addEntireContainer(mPtr);
-        objectList->sendContainer();
+        mwmp::BaseObject baseObject = objectList->getBaseObjectFromPtr(mPtr);
+
+        for (size_t i = 0; i < mModel->getItemCount(); ++i)
+        {
+            const ItemStack& item = mModel->getItem(i);
+
+            // Trigger crimes related to the attempted taking of these items, if applicable
+            if (!onTakeItem(item, item.mCount))
+                break;
+
+            objectList->addContainerItem(baseObject, item, item.mCount, item.mCount);
+        }
+
+        if (baseObject.containerItems.size() > 0)
+        {
+            objectList->addBaseObject(baseObject);
+            objectList->sendContainer();
+        }
         /*
             End of tes3mp addition
         */

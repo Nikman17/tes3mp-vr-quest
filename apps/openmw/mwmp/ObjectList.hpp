@@ -2,6 +2,7 @@
 #define OPENMW_OBJECTLIST_HPP
 
 #include <components/openmw-mp/Base/BaseObject.hpp>
+#include "../mwgui/itemmodel.hpp"
 #include "../mwworld/worldimp.hpp"
 #include <RakNetTypes.h>
 
@@ -20,6 +21,7 @@ namespace mwmp
         void addBaseObject(BaseObject baseObject);
         mwmp::BaseObject getBaseObjectFromPtr(const MWWorld::Ptr& ptr);
         void addContainerItem(mwmp::BaseObject& baseObject, const MWWorld::Ptr& itemPtr, int itemCount, int actionCount);
+        void addContainerItem(mwmp::BaseObject& baseObject, const MWGui::ItemStack& itemStack, int itemCount, int actionCount);
         void addContainerItem(mwmp::BaseObject& baseObject, const std::string itemId, int itemCount, int actionCount);
         void addEntireContainer(const MWWorld::Ptr& ptr);
 

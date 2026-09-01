@@ -237,7 +237,25 @@ namespace MWWorld
 
     void Player::activate(MWWorld::Ptr obj)
     {
-        MWBase::Environment::get().getWorld()->activate(obj, getPlayer());
+        /*
+            Start of tes3mp change (major)
+
+            Disable unilateral activating of objects on this client
+
+            Instead, send an ID_OBJECT_ACTIVATE packet every time an attempt to activate
+            an object is made here and expect the server's reply to our packet to cause
+            the actual activation of objects
+        */
+        //MWBase::Environment::get().getWorld()->activate(obj, getPlayer());
+
+        mwmp::ObjectList* objectList = mwmp::Main::get().getNetworking()->getObjectList();
+        objectList->reset();
+        objectList->packetOrigin = mwmp::CLIENT_GAMEPLAY;
+        objectList->addObjectActivate(obj, MWMechanics::getPlayer());
+        objectList->sendObjectActivate();
+        /*
+            End of tes3mp change (major)
+        */
     }
 
     void Player::activate()
