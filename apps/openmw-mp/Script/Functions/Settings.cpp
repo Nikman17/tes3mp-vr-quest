@@ -78,6 +78,20 @@ void SettingFunctions::ClearGameSettingValues(unsigned short pid) {
     player->gameSettings.clear();
 }
 
+void SettingFunctions::SetVRSettingValue(unsigned short pid, const char* setting, const char* value) {
+    Player* player;
+    GET_PLAYER(pid, player, );
+
+    player->vrSettings[setting] = value;
+}
+
+void SettingFunctions::ClearVRSettingValues(unsigned short pid) {
+    Player* player;
+    GET_PLAYER(pid, player, );
+
+    player->vrSettings.clear();
+}
+
 void SettingFunctions::SendSettings(unsigned short pid, bool sendToOtherPlayers, bool skipAttachedPlayer) noexcept
 {
     Player *player;

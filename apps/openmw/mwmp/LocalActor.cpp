@@ -274,6 +274,7 @@ void LocalActor::updateAttackOrCast()
     {
         mwmp::Main::get().getNetworking()->getActorList()->addCastActor(*this);
         cast.shouldSend = false;
+        cast.hasProjectile = false;
     }
 }
 

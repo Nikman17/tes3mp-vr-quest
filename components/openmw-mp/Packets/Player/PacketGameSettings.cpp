@@ -21,11 +21,11 @@ void PacketGameSettings::Packet(RakNet::BitStream *newBitstream, bool send)
     RW(player->enforcedLogLevel, send);
     RW(player->physicsFramerate, send);
 
-    uint32_t gameSettingCount = static_cast<uint32_t>(player->gameSettings.size());
-    RW(gameSettingCount, send);
-
     std::string mapIndex;
     std::string mapValue;
+
+    uint32_t gameSettingCount = static_cast<uint32_t>(player->gameSettings.size());
+    RW(gameSettingCount, send);
 
     if (send)
     {
@@ -45,6 +45,30 @@ void PacketGameSettings::Packet(RakNet::BitStream *newBitstream, bool send)
             RW(mapIndex, send, false);
             RW(mapValue, send, false);
             player->gameSettings[mapIndex] = mapValue;
+        }
+    }
+
+    uint32_t vrSettingCount = static_cast<uint32_t>(player->vrSettings.size());
+    RW(vrSettingCount, send);
+
+    if (send)
+    {
+        for (auto&& vrSetting : player->vrSettings)
+        {
+            mapIndex = vrSetting.first;
+            mapValue = vrSetting.second;
+            RW(mapIndex, send, false);
+            RW(mapValue, send, false);
+        }
+    }
+    else
+    {
+        player->vrSettings.clear();
+        for (unsigned int n = 0; n < vrSettingCount; n++)
+        {
+            RW(mapIndex, send, false);
+            RW(mapValue, send, false);
+            player->vrSettings[mapIndex] = mapValue;
         }
     }
 }

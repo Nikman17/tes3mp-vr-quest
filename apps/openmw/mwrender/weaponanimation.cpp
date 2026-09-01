@@ -160,8 +160,8 @@ void WeaponAnimation::releaseArrow(MWWorld::Ptr actor, float attackStrength)
     */
 
     // The orientation of the launched projectile. Always the same as the actor orientation, even if the ArrowBone's orientation dictates otherwise.
-    osg::Quat orient = osg::Quat(actor.getRefData().getPosition().rot[0], osg::Vec3f(-1,0,0))
-            * osg::Quat(actor.getRefData().getPosition().rot[2], osg::Vec3f(0,0,-1));
+    osg::Quat orient = osg::Quat(actor.getRefData().getPosition().rot[0], osg::Vec3f(-1, 0, 0))
+        * osg::Quat(actor.getRefData().getPosition().rot[2], osg::Vec3f(0, 0, -1));
 
 #ifdef USE_OPENXR
     bool isPlayer = actor == MWMechanics::getPlayer();
@@ -196,6 +196,39 @@ void WeaponAnimation::releaseArrow(MWWorld::Ptr actor, float attackStrength)
         if (nodepaths.empty())
             return;
         osg::Vec3f launchPos = osg::computeLocalToWorld(nodepaths[0]).getTrans();
+
+        /*
+            Start of tes3mp addition
+
+            If the actor shooting this is a LocalPlayer or LocalActor, track their projectile origin so it can be sent
+            in the next PlayerAttack or ActorAttack packet
+
+            Otherwise, set the projectileOrigin for a DedicatedPlayer or DedicatedActor
+        */
+        if (localAttack)
+        {
+            localAttack->projectileOrigin.origin[0] = launchPos.x();
+            localAttack->projectileOrigin.origin[1] = launchPos.y();
+            localAttack->projectileOrigin.origin[2] = launchPos.z();
+            localAttack->projectileOrigin.orientation[0] = orient.x();
+            localAttack->projectileOrigin.orientation[1] = orient.y();
+            localAttack->projectileOrigin.orientation[2] = orient.z();
+            localAttack->projectileOrigin.orientation[3] = orient.w();
+        }
+        else
+        {
+            mwmp::Attack* dedicatedAttack = MechanicsHelper::getDedicatedAttack(actor);
+
+            if (dedicatedAttack)
+            {
+                launchPos = osg::Vec3f(dedicatedAttack->projectileOrigin.origin[0], dedicatedAttack->projectileOrigin.origin[1], dedicatedAttack->projectileOrigin.origin[2]);
+                orient = osg::Quat(dedicatedAttack->projectileOrigin.orientation[0], dedicatedAttack->projectileOrigin.orientation[1], dedicatedAttack->projectileOrigin.orientation[2],
+                    dedicatedAttack->projectileOrigin.orientation[3]);
+            }
+        }
+        /*
+            End of tes3mp addition
+        */
 
         float fThrownWeaponMinSpeed = gmst.find("fThrownWeaponMinSpeed")->mValue.getFloat();
         float fThrownWeaponMaxSpeed = gmst.find("fThrownWeaponMaxSpeed")->mValue.getFloat();
@@ -234,6 +267,39 @@ void WeaponAnimation::releaseArrow(MWWorld::Ptr actor, float attackStrength)
         if (nodepaths.empty())
             return;
         osg::Vec3f launchPos = osg::computeLocalToWorld(nodepaths[0]).getTrans();
+
+        /*
+            Start of tes3mp addition
+
+            If the actor shooting this is a LocalPlayer or LocalActor, track their projectile origin so it can be sent
+            in the next PlayerAttack or ActorAttack packet
+
+            Otherwise, set the projectileOrigin for a DedicatedPlayer or DedicatedActor
+        */
+        if (localAttack)
+        {
+            localAttack->projectileOrigin.origin[0] = launchPos.x();
+            localAttack->projectileOrigin.origin[1] = launchPos.y();
+            localAttack->projectileOrigin.origin[2] = launchPos.z();
+            localAttack->projectileOrigin.orientation[0] = orient.x();
+            localAttack->projectileOrigin.orientation[1] = orient.y();
+            localAttack->projectileOrigin.orientation[2] = orient.z();
+            localAttack->projectileOrigin.orientation[3] = orient.w();
+        }
+        else
+        {
+            mwmp::Attack* dedicatedAttack = MechanicsHelper::getDedicatedAttack(actor);
+
+            if (dedicatedAttack)
+            {
+                launchPos = osg::Vec3f(dedicatedAttack->projectileOrigin.origin[0], dedicatedAttack->projectileOrigin.origin[1], dedicatedAttack->projectileOrigin.origin[2]);
+                orient = osg::Quat(dedicatedAttack->projectileOrigin.orientation[0], dedicatedAttack->projectileOrigin.orientation[1], dedicatedAttack->projectileOrigin.orientation[2],
+                    dedicatedAttack->projectileOrigin.orientation[3]);
+            }
+        }
+        /*
+            End of tes3mp addition
+        */
 
         float fProjectileMinSpeed = gmst.find("fProjectileMinSpeed")->mValue.getFloat();
         float fProjectileMaxSpeed = gmst.find("fProjectileMaxSpeed")->mValue.getFloat();

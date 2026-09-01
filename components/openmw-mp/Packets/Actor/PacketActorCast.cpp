@@ -36,4 +36,17 @@ void PacketActorCast::Actor(BaseActor &actor, bool send)
         RW(actor.cast.instant, send);
         RW(actor.cast.spellId, send, true);
     }
+
+    RW(actor.cast.hasProjectile, send);
+
+    if (actor.cast.hasProjectile)
+    {
+        RW(actor.cast.projectileOrigin.origin[0], send);
+        RW(actor.cast.projectileOrigin.origin[1], send);
+        RW(actor.cast.projectileOrigin.origin[2], send);
+        RW(actor.cast.projectileOrigin.orientation[0], send);
+        RW(actor.cast.projectileOrigin.orientation[1], send);
+        RW(actor.cast.projectileOrigin.orientation[2], send);
+        RW(actor.cast.projectileOrigin.orientation[3], send);
+    }
 }

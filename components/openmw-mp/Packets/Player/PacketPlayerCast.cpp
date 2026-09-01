@@ -39,4 +39,19 @@ void PacketPlayerCast::Packet(RakNet::BitStream *newBitstream, bool send)
         RW(player->cast.instant, send);
         RW(player->cast.spellId, send, true);
     }
+
+    RW(player->cast.hasProjectile, send);
+
+    if (player->cast.hasProjectile)
+    {
+        RW(player->cast.projectileOrigin.origin[0], send);
+        RW(player->cast.projectileOrigin.origin[1], send);
+        RW(player->cast.projectileOrigin.origin[2], send);
+        RW(player->cast.projectileOrigin.orientation[0], send);
+        RW(player->cast.projectileOrigin.orientation[1], send);
+        RW(player->cast.projectileOrigin.orientation[2], send);
+        RW(player->cast.projectileOrigin.orientation[3], send);
+        RW(player->position, send);
+        RW(player->direction, send);
+    }
 }

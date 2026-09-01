@@ -84,10 +84,12 @@ cp -r "$OPENMW_BUILD/resources" "$ASSETS_DST"
 
 # TES3MP wire-compat: RakNet connection password = TES3MP_VERSION + PROTO + commit hash
 # taken from resources/version. Source tree has no .git, so cmake leaves the hash empty
-# and clients get kicked with "Version mismatch!". Pin the official 0.8.0 hashes here.
-printf '0.47.0\n000e8724cacaf0176f6220de111ca45098807e78\ne29e3248fcf57d6cfac6efd049955c133f2d9896\n' \
+# and clients get kicked with "Version mismatch!". Pin the official 0.8.1 hashes here
+# (commit = tag tes3mp-0.8.1; the engine sources carry the matching 0.8.1/proto-10
+# defines via quest-patches/tes3mp-0.8.1.patch).
+printf '0.47.0\n68954091c54d0596037c4fb54d2812313b7582a1\n68954091c54d0596037c4fb54d2812313b7582a1\n' \
     > "$ASSETS_DST/resources/version"
-echo "    resources/version pinned to tes3mp-0.8.0 (000e8724ca)"
+echo "    resources/version pinned to tes3mp-0.8.1 (68954091c5)"
 mkdir -p "$ASSETS_DST/openmw"
 cp "$OPENMW_BUILD/defaults.bin"          "$ASSETS_DST/openmw/" 2>/dev/null || true
 cp "$OPENMW_BUILD/gamecontrollerdb.txt"  "$ASSETS_DST/openmw/" 2>/dev/null || true

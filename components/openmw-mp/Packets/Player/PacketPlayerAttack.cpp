@@ -41,6 +41,14 @@ void PacketPlayerAttack::Packet(RakNet::BitStream *newBitstream, bool send)
         RW(player->attack.attackStrength, send);
         RW(player->attack.rangedWeaponId, send, true);
         RW(player->attack.rangedAmmoId, send, true);
+
+        RW(player->attack.projectileOrigin.origin[0], send);
+        RW(player->attack.projectileOrigin.origin[1], send);
+        RW(player->attack.projectileOrigin.origin[2], send);
+        RW(player->attack.projectileOrigin.orientation[0], send);
+        RW(player->attack.projectileOrigin.orientation[1], send);
+        RW(player->attack.projectileOrigin.orientation[2], send);
+        RW(player->attack.projectileOrigin.orientation[3], send);
     }
 
     if (player->attack.isHit)

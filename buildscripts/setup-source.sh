@@ -141,10 +141,24 @@ if [ ! -f "$OPENMW_VR/CMakeLists.txt" ]; then
     exit 1
 fi
 
+# TES3MP 0.8.1 protocol upgrade (upstream diff origin/0.8.0-vr..tes3mp-0.8.1-vr,
+# client-relevant files). Applied via file check because the tree is not a git
+# repo and its files may carry CRLF endings.
+echo "==> Applying TES3MP 0.8.1 protocol upgrade..."
+if grep -q 'TES3MP_PROTO_VERSION 10' "$OPENMW_VR/components/openmw-mp/Version.hpp"; then
+    echo "  already at protocol 10"
+else
+    (cd "$OPENMW_VR" && patch -p1 --binary -N < "$DIR/quest-patches/tes3mp-0.8.1.patch") || {
+        echo "ERROR: 0.8.1 patch failed to apply"; exit 1; }
+    grep -q 'TES3MP_PROTO_VERSION 10' "$OPENMW_VR/components/openmw-mp/Version.hpp" || {
+        echo "ERROR: protocol still not 10 after patch"; exit 1; }
+    echo "  upgraded to TES3MP 0.8.1 / protocol 10"
+fi
+
 # Quest-specific patches live in the repo (buildscripts/quest-patches); each is idempotent
 echo "==> Applying Quest patches..."
 for p in patch_openxr_android_init patch_quest_swapchain_blit patch_vr_chat_buttons \
-         patch_vr_chat_font patch_vr_chat_actions patch_vr_refresh_rate; do
+         patch_vr_chat_font patch_vr_chat_actions patch_vr_refresh_rate patch_fatal_log_order; do
     echo "  -> $p"
     python3 "$DIR/quest-patches/$p.py"
 done

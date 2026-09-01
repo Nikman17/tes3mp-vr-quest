@@ -253,6 +253,7 @@ namespace mwmp
         std::string chatMessage;
         CharGenState charGenState;
         std::map<std::string, std::string> gameSettings;
+        std::map<std::string, std::string> vrSettings;
 
         std::string sound;
         Animation animation;

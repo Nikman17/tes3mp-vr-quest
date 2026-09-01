@@ -40,6 +40,14 @@ void PacketActorAttack::Actor(BaseActor &actor, bool send)
         RW(actor.attack.attackStrength, send);
         RW(actor.attack.rangedWeaponId, send, true);
         RW(actor.attack.rangedAmmoId, send, true);
+
+        RW(actor.attack.projectileOrigin.origin[0], send);
+        RW(actor.attack.projectileOrigin.origin[1], send);
+        RW(actor.attack.projectileOrigin.origin[2], send);
+        RW(actor.attack.projectileOrigin.orientation[0], send);
+        RW(actor.attack.projectileOrigin.orientation[1], send);
+        RW(actor.attack.projectileOrigin.orientation[2], send);
+        RW(actor.attack.projectileOrigin.orientation[3], send);
     }
 
     if (actor.attack.isHit)

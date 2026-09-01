@@ -155,7 +155,6 @@ bool LocalPlayer::processCharGen()
         }
         getNetworking()->getPlayerPacket(ID_PLAYER_CHARGEN)->setPlayer(this);
         getNetworking()->getPlayerPacket(ID_PLAYER_CHARGEN)->Send();
-        charGenState.currentStage++;
 
         return false;
     }
@@ -590,6 +589,7 @@ void LocalPlayer::updateAttackOrCast()
         getNetworking()->getPlayerPacket(ID_PLAYER_CAST)->Send();
 
         cast.shouldSend = false;
+        cast.hasProjectile = false;
     }
 }
 
@@ -824,11 +824,18 @@ void LocalPlayer::removeSpellsActive()
  
     for (const auto& activeSpell : spellsActiveChanges.activeSpells)
     {
+        LOG_APPEND(TimedLog::LOG_INFO, "- removing %sstacking active spell %s", activeSpell.isStackingSpell ? "" : "non-", activeSpell.id.c_str());
+
         // Remove stacking spells based on their timestamps
         if (activeSpell.isStackingSpell)
         {
             MWWorld::TimeStamp timestamp = MWWorld::TimeStamp(activeSpell.timestampHour, activeSpell.timestampDay);
-            activeSpells.removeSpellByTimestamp(activeSpell.id, timestamp);
+            bool foundSpell = activeSpells.removeSpellByTimestamp(activeSpell.id, timestamp);
+
+            if (!foundSpell)
+            {
+                LOG_APPEND(TimedLog::LOG_INFO, "-- spell with this ID and timestamp could not be found!");
+            }
         }
         else
         {

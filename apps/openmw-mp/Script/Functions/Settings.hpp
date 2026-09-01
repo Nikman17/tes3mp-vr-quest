@@ -16,6 +16,9 @@
     {"SetGameSettingValue",         SettingFunctions::SetGameSettingValue},\
     {"ClearGameSettingValues",      SettingFunctions::ClearGameSettingValues},\
     \
+    {"SetVRSettingValue",           SettingFunctions::SetVRSettingValue},\
+    {"ClearVRSettingValues",        SettingFunctions::ClearVRSettingValues},\
+    \
     {"SendSettings",                SettingFunctions::SendSettings}
 
 class SettingFunctions
@@ -125,14 +128,36 @@ public:
     static void SetGameSettingValue(unsigned short pid, const char* setting, const char* value);
 
     /**
-    * \brief Clear the settings values
+    * \brief Clear the Game setting values stored for a player.
     *
-    * Clear any changes done by SetGameSettingValue
+    * Clear any changes done by SetGameSettingValue()
     *
     * \param pid The player ID.
     * \return void
     */
     static void ClearGameSettingValues(unsigned short pid);
+
+    /**
+    * \brief Set value for a VR setting.
+    *
+    * This overrides the setting value set in OpenMW Launcher. Only applies to the VR category.
+    *
+    * \param pid The player ID.
+    * \param setting Name of a setting in the VR category
+    * \param value Value of the setting (as a string)
+    * \return void
+    */
+    static void SetVRSettingValue(unsigned short pid, const char* setting, const char* value);
+
+    /**
+    * \brief Clear the VR setting values stored for a player.
+    *
+    * Clear any changes done by SetVRSettingValue()
+    *
+    * \param pid The player ID.
+    * \return void
+    */
+    static void ClearVRSettingValues(unsigned short pid);
 
     /**
     * \brief Send a PlayerSettings packet to the player affected by it.

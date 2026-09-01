@@ -12,6 +12,7 @@ namespace mwmp
     class ProcessorGameSettings final: public PlayerProcessor
     {
         const std::string GAME_SETTING_CATEGORY = "Game";
+        const std::string VR_SETTING_CATEGORY = "VR";
     public:
         ProcessorGameSettings()
         {
@@ -51,9 +52,18 @@ namespace mwmp
 
                 MWBase::Environment::get().getWorld()->setPhysicsFramerate(player->physicsFramerate);
 
-                for (auto setting : player->gameSettings) {
+                for (auto setting : player->gameSettings)
+                {
                     Settings::Manager::setString(setting.first, GAME_SETTING_CATEGORY, setting.second);
                 }
+
+                // Only read VR settings for players using a VR build
+#ifdef USE_OPENXR
+                for (auto setting : player->vrSettings)
+                {
+                    Settings::Manager::setString(setting.first, VR_SETTING_CATEGORY, setting.second);
+                }
+#endif
             }
         }
     };

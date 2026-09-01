@@ -1,0 +1,522 @@
+diff --git a/apps/openmw-mp/Script/Functions/Settings.cpp b/apps/openmw-mp/Script/Functions/Settings.cpp
+index 88c42a78c..42889d4de 100644
+--- a/apps/openmw-mp/Script/Functions/Settings.cpp
++++ b/apps/openmw-mp/Script/Functions/Settings.cpp
+@@ -78,6 +78,20 @@ void SettingFunctions::ClearGameSettingValues(unsigned short pid) {
+     player->gameSettings.clear();
+ }
+ 
++void SettingFunctions::SetVRSettingValue(unsigned short pid, const char* setting, const char* value) {
++    Player* player;
++    GET_PLAYER(pid, player, );
++
++    player->vrSettings[setting] = value;
++}
++
++void SettingFunctions::ClearVRSettingValues(unsigned short pid) {
++    Player* player;
++    GET_PLAYER(pid, player, );
++
++    player->vrSettings.clear();
++}
++
+ void SettingFunctions::SendSettings(unsigned short pid, bool sendToOtherPlayers, bool skipAttachedPlayer) noexcept
+ {
+     Player *player;
+diff --git a/apps/openmw-mp/Script/Functions/Settings.hpp b/apps/openmw-mp/Script/Functions/Settings.hpp
+index 86b99f37d..ad0a942b8 100644
+--- a/apps/openmw-mp/Script/Functions/Settings.hpp
++++ b/apps/openmw-mp/Script/Functions/Settings.hpp
+@@ -16,6 +16,9 @@
+     {"SetGameSettingValue",         SettingFunctions::SetGameSettingValue},\
+     {"ClearGameSettingValues",      SettingFunctions::ClearGameSettingValues},\
+     \
++    {"SetVRSettingValue",           SettingFunctions::SetVRSettingValue},\
++    {"ClearVRSettingValues",        SettingFunctions::ClearVRSettingValues},\
++    \
+     {"SendSettings",                SettingFunctions::SendSettings}
+ 
+ class SettingFunctions
+@@ -125,15 +128,37 @@ public:
+     static void SetGameSettingValue(unsigned short pid, const char* setting, const char* value);
+ 
+     /**
+-    * \brief Clear the settings values
++    * \brief Clear the Game setting values stored for a player.
+     *
+-    * Clear any changes done by SetGameSettingValue
++    * Clear any changes done by SetGameSettingValue()
+     *
+     * \param pid The player ID.
+     * \return void
+     */
+     static void ClearGameSettingValues(unsigned short pid);
+ 
++    /**
++    * \brief Set value for a VR setting.
++    *
++    * This overrides the setting value set in OpenMW Launcher. Only applies to the VR category.
++    *
++    * \param pid The player ID.
++    * \param setting Name of a setting in the VR category
++    * \param value Value of the setting (as a string)
++    * \return void
++    */
++    static void SetVRSettingValue(unsigned short pid, const char* setting, const char* value);
++
++    /**
++    * \brief Clear the VR setting values stored for a player.
++    *
++    * Clear any changes done by SetVRSettingValue()
++    *
++    * \param pid The player ID.
++    * \return void
++    */
++    static void ClearVRSettingValues(unsigned short pid);
++
+     /**
+     * \brief Send a PlayerSettings packet to the player affected by it.
+     *
+diff --git a/apps/openmw/mwmp/LocalActor.cpp b/apps/openmw/mwmp/LocalActor.cpp
+index ebcf74dd8..4924b17ca 100644
+--- a/apps/openmw/mwmp/LocalActor.cpp
++++ b/apps/openmw/mwmp/LocalActor.cpp
+@@ -274,6 +274,7 @@ void LocalActor::updateAttackOrCast()
+     {
+         mwmp::Main::get().getNetworking()->getActorList()->addCastActor(*this);
+         cast.shouldSend = false;
++        cast.hasProjectile = false;
+     }
+ }
+ 
+diff --git a/apps/openmw/mwmp/LocalPlayer.cpp b/apps/openmw/mwmp/LocalPlayer.cpp
+index de496bf97..7d8501d8e 100644
+--- a/apps/openmw/mwmp/LocalPlayer.cpp
++++ b/apps/openmw/mwmp/LocalPlayer.cpp
+@@ -589,6 +589,7 @@ void LocalPlayer::updateAttackOrCast()
+         getNetworking()->getPlayerPacket(ID_PLAYER_CAST)->Send();
+ 
+         cast.shouldSend = false;
++        cast.hasProjectile = false;
+     }
+ }
+ 
+diff --git a/apps/openmw/mwmp/processors/player/ProcessorGameSettings.hpp b/apps/openmw/mwmp/processors/player/ProcessorGameSettings.hpp
+index 28751d201..4d49c0414 100644
+--- a/apps/openmw/mwmp/processors/player/ProcessorGameSettings.hpp
++++ b/apps/openmw/mwmp/processors/player/ProcessorGameSettings.hpp
+@@ -12,6 +12,7 @@ namespace mwmp
+     class ProcessorGameSettings final: public PlayerProcessor
+     {
+         const std::string GAME_SETTING_CATEGORY = "Game";
++        const std::string VR_SETTING_CATEGORY = "VR";
+     public:
+         ProcessorGameSettings()
+         {
+@@ -51,9 +52,18 @@ namespace mwmp
+ 
+                 MWBase::Environment::get().getWorld()->setPhysicsFramerate(player->physicsFramerate);
+ 
+-                for (auto setting : player->gameSettings) {
++                for (auto setting : player->gameSettings)
++                {
+                     Settings::Manager::setString(setting.first, GAME_SETTING_CATEGORY, setting.second);
+                 }
++
++                // Only read VR settings for players using a VR build
++#ifdef USE_OPENXR
++                for (auto setting : player->vrSettings)
++                {
++                    Settings::Manager::setString(setting.first, VR_SETTING_CATEGORY, setting.second);
++                }
++#endif
+             }
+         }
+     };
+diff --git a/apps/openmw/mwmp/processors/player/ProcessorPlayerAttack.hpp b/apps/openmw/mwmp/processors/player/ProcessorPlayerAttack.hpp
+index e176b501f..0fbf063bc 100644
+--- a/apps/openmw/mwmp/processors/player/ProcessorPlayerAttack.hpp
++++ b/apps/openmw/mwmp/processors/player/ProcessorPlayerAttack.hpp
+@@ -17,8 +17,15 @@ namespace mwmp
+ 
+         virtual void Do(PlayerPacket &packet, BasePlayer *player)
+         {
+-            if (player != 0)
+-                MechanicsHelper::processAttack(player->attack, static_cast<DedicatedPlayer*>(player)->getPtr());
++            if (!isLocal() && player != 0)
++            {
++                DedicatedPlayer& dedicatedPlayer = static_cast<DedicatedPlayer&>(*player);
++                MWWorld::Ptr playerPtr = dedicatedPlayer.getPtr();
++                MWBase::World* world = MWBase::Environment::get().getWorld();
++                world->moveObject(playerPtr, dedicatedPlayer.position.pos[0], dedicatedPlayer.position.pos[1], dedicatedPlayer.position.pos[2]);
++                world->rotateObject(playerPtr, dedicatedPlayer.position.rot[0], 0, dedicatedPlayer.position.rot[2]);
++                MechanicsHelper::processAttack(player->attack, playerPtr);
++            }
+         }
+     };
+ }
+diff --git a/apps/openmw/mwmp/processors/player/ProcessorPlayerCast.hpp b/apps/openmw/mwmp/processors/player/ProcessorPlayerCast.hpp
+index ada670c95..69924146f 100644
+--- a/apps/openmw/mwmp/processors/player/ProcessorPlayerCast.hpp
++++ b/apps/openmw/mwmp/processors/player/ProcessorPlayerCast.hpp
+@@ -17,8 +17,15 @@ namespace mwmp
+ 
+         virtual void Do(PlayerPacket &packet, BasePlayer *player)
+         {
+-            if (player != 0)
+-                MechanicsHelper::processCast(player->cast, static_cast<DedicatedPlayer*>(player)->getPtr());
++            if (!isLocal() && player != 0)
++            {
++                DedicatedPlayer& dedicatedPlayer = static_cast<DedicatedPlayer&>(*player);
++                MWWorld::Ptr playerPtr = dedicatedPlayer.getPtr();
++                MWBase::World* world = MWBase::Environment::get().getWorld();
++                world->moveObject(playerPtr, dedicatedPlayer.position.pos[0], dedicatedPlayer.position.pos[1], dedicatedPlayer.position.pos[2]);
++                world->rotateObject(playerPtr, dedicatedPlayer.position.rot[0], 0, dedicatedPlayer.position.rot[2]);
++                MechanicsHelper::processCast(player->cast, playerPtr);
++            }
+         }
+     };
+ }
+diff --git a/apps/openmw/mwrender/weaponanimation.cpp b/apps/openmw/mwrender/weaponanimation.cpp
+index d67c0a2f0..2eff57b9b 100644
+--- a/apps/openmw/mwrender/weaponanimation.cpp
++++ b/apps/openmw/mwrender/weaponanimation.cpp
+@@ -197,6 +197,39 @@ void WeaponAnimation::releaseArrow(MWWorld::Ptr actor, float attackStrength)
+             return;
+         osg::Vec3f launchPos = osg::computeLocalToWorld(nodepaths[0]).getTrans();
+ 
++        /*
++            Start of tes3mp addition
++
++            If the actor shooting this is a LocalPlayer or LocalActor, track their projectile origin so it can be sent
++            in the next PlayerAttack or ActorAttack packet
++
++            Otherwise, set the projectileOrigin for a DedicatedPlayer or DedicatedActor
++        */
++        if (localAttack)
++        {
++            localAttack->projectileOrigin.origin[0] = launchPos.x();
++            localAttack->projectileOrigin.origin[1] = launchPos.y();
++            localAttack->projectileOrigin.origin[2] = launchPos.z();
++            localAttack->projectileOrigin.orientation[0] = orient.x();
++            localAttack->projectileOrigin.orientation[1] = orient.y();
++            localAttack->projectileOrigin.orientation[2] = orient.z();
++            localAttack->projectileOrigin.orientation[3] = orient.w();
++        }
++        else
++        {
++            mwmp::Attack* dedicatedAttack = MechanicsHelper::getDedicatedAttack(actor);
++
++            if (dedicatedAttack)
++            {
++                launchPos = osg::Vec3f(dedicatedAttack->projectileOrigin.origin[0], dedicatedAttack->projectileOrigin.origin[1], dedicatedAttack->projectileOrigin.origin[2]);
++                orient = osg::Quat(dedicatedAttack->projectileOrigin.orientation[0], dedicatedAttack->projectileOrigin.orientation[1], dedicatedAttack->projectileOrigin.orientation[2],
++                    dedicatedAttack->projectileOrigin.orientation[3]);
++            }
++        }
++        /*
++            End of tes3mp addition
++        */
++
+         float fThrownWeaponMinSpeed = gmst.find("fThrownWeaponMinSpeed")->mValue.getFloat();
+         float fThrownWeaponMaxSpeed = gmst.find("fThrownWeaponMaxSpeed")->mValue.getFloat();
+         float speed = fThrownWeaponMinSpeed + (fThrownWeaponMaxSpeed - fThrownWeaponMinSpeed) * attackStrength;
+@@ -235,6 +268,39 @@ void WeaponAnimation::releaseArrow(MWWorld::Ptr actor, float attackStrength)
+             return;
+         osg::Vec3f launchPos = osg::computeLocalToWorld(nodepaths[0]).getTrans();
+ 
++        /*
++            Start of tes3mp addition
++
++            If the actor shooting this is a LocalPlayer or LocalActor, track their projectile origin so it can be sent
++            in the next PlayerAttack or ActorAttack packet
++
++            Otherwise, set the projectileOrigin for a DedicatedPlayer or DedicatedActor
++        */
++        if (localAttack)
++        {
++            localAttack->projectileOrigin.origin[0] = launchPos.x();
++            localAttack->projectileOrigin.origin[1] = launchPos.y();
++            localAttack->projectileOrigin.origin[2] = launchPos.z();
++            localAttack->projectileOrigin.orientation[0] = orient.x();
++            localAttack->projectileOrigin.orientation[1] = orient.y();
++            localAttack->projectileOrigin.orientation[2] = orient.z();
++            localAttack->projectileOrigin.orientation[3] = orient.w();
++        }
++        else
++        {
++            mwmp::Attack* dedicatedAttack = MechanicsHelper::getDedicatedAttack(actor);
++
++            if (dedicatedAttack)
++            {
++                launchPos = osg::Vec3f(dedicatedAttack->projectileOrigin.origin[0], dedicatedAttack->projectileOrigin.origin[1], dedicatedAttack->projectileOrigin.origin[2]);
++                orient = osg::Quat(dedicatedAttack->projectileOrigin.orientation[0], dedicatedAttack->projectileOrigin.orientation[1], dedicatedAttack->projectileOrigin.orientation[2],
++                    dedicatedAttack->projectileOrigin.orientation[3]);
++            }
++        }
++        /*
++            End of tes3mp addition
++        */
++
+         float fProjectileMinSpeed = gmst.find("fProjectileMinSpeed")->mValue.getFloat();
+         float fProjectileMaxSpeed = gmst.find("fProjectileMaxSpeed")->mValue.getFloat();
+         float speed = fProjectileMinSpeed + (fProjectileMaxSpeed - fProjectileMinSpeed) * attackStrength;
+diff --git a/apps/openmw/mwworld/projectilemanager.cpp b/apps/openmw/mwworld/projectilemanager.cpp
+index 077a46220..d816ea57e 100644
+--- a/apps/openmw/mwworld/projectilemanager.cpp
++++ b/apps/openmw/mwworld/projectilemanager.cpp
+@@ -52,6 +52,16 @@
+ #include "../mwvr/vranimation.hpp"
+ #endif
+ 
++/*
++    Start of tes3mp addition
++
++    Include additional headers for multiplayer purposes
++*/
++#include "../mwmp/MechanicsHelper.hpp"
++/*
++    End of tes3mp addition
++*/
++
+ namespace
+ {
+     ESM::EffectList getMagicBoltData(std::vector<std::string>& projectileIDs, std::set<std::string>& sounds, float& speed, std::string& texture, std::string& sourceName, const std::string& id)
+@@ -292,6 +302,42 @@ namespace MWWorld
+         else
+             orient.makeRotate(osg::Vec3f(0,1,0), osg::Vec3f(fallbackDirection));
+ 
++        /*
++            Start of tes3mp addition
++
++            If the actor casting this is a LocalPlayer or LocalActor, track their projectile origin so it can be sent
++            in the next PlayerCast or ActorCast packet
++
++            Otherwise, set the projectileOrigin for a DedicatedPlayer or DedicatedActor
++        */
++        mwmp::Cast* localCast = MechanicsHelper::getLocalCast(caster);
++
++        if (localCast)
++        {
++            localCast->hasProjectile = true;
++            localCast->projectileOrigin.origin[0] = pos.x();
++            localCast->projectileOrigin.origin[1] = pos.y();
++            localCast->projectileOrigin.origin[2] = pos.z();
++            localCast->projectileOrigin.orientation[0] = orient.x();
++            localCast->projectileOrigin.orientation[1] = orient.y();
++            localCast->projectileOrigin.orientation[2] = orient.z();
++            localCast->projectileOrigin.orientation[3] = orient.w();
++        }
++        else
++        {
++            mwmp::Cast* dedicatedCast = MechanicsHelper::getDedicatedCast(caster);
++
++            if (dedicatedCast)
++            {
++                pos = osg::Vec3f(dedicatedCast->projectileOrigin.origin[0], dedicatedCast->projectileOrigin.origin[1], dedicatedCast->projectileOrigin.origin[2]);
++                orient = osg::Quat(dedicatedCast->projectileOrigin.orientation[0], dedicatedCast->projectileOrigin.orientation[1], dedicatedCast->projectileOrigin.orientation[2],
++                    dedicatedCast->projectileOrigin.orientation[3]);
++            }
++        }
++        /*
++            End of tes3mp addition
++        */
++
+         MagicBoltState state;
+         state.mSpellId = spellId;
+         state.mCasterHandle = caster;
+diff --git a/components/openmw-mp/Base/BasePlayer.hpp b/components/openmw-mp/Base/BasePlayer.hpp
+index 9ece0e742..f567b7bb3 100644
+--- a/components/openmw-mp/Base/BasePlayer.hpp
++++ b/components/openmw-mp/Base/BasePlayer.hpp
+@@ -253,6 +253,7 @@ namespace mwmp
+         std::string chatMessage;
+         CharGenState charGenState;
+         std::map<std::string, std::string> gameSettings;
++        std::map<std::string, std::string> vrSettings;
+ 
+         std::string sound;
+         Animation animation;
+diff --git a/components/openmw-mp/Base/BaseStructs.hpp b/components/openmw-mp/Base/BaseStructs.hpp
+index 970aeb80c..82e7f5782 100644
+--- a/components/openmw-mp/Base/BaseStructs.hpp
++++ b/components/openmw-mp/Base/BaseStructs.hpp
+@@ -84,6 +84,12 @@ namespace mwmp
+                 enchantmentCharge == rhs.enchantmentCharge && soul == rhs.soul;
+         }
+     };
++
++    struct ProjectileOrigin
++    {
++        float origin[3];
++        float orientation[4];
++    };
+     
+     struct Target
+     {
+@@ -117,6 +123,7 @@ namespace mwmp
+         std::string rangedAmmoId;
+ 
+         ESM::Position hitPosition;
++        ProjectileOrigin projectileOrigin;
+ 
+         float damage = 0;
+         float attackStrength = 0;
+@@ -150,7 +157,8 @@ namespace mwmp
+         std::string spellId; // id of spell (e.g. "fireball")
+         std::string itemId;
+ 
+-        ESM::Position hitPosition;
++        bool hasProjectile = false;
++        ProjectileOrigin projectileOrigin;
+ 
+         bool isHit;
+         bool success;
+diff --git a/components/openmw-mp/Packets/Actor/PacketActorAttack.cpp b/components/openmw-mp/Packets/Actor/PacketActorAttack.cpp
+index 4ce20c026..aa3c70b85 100644
+--- a/components/openmw-mp/Packets/Actor/PacketActorAttack.cpp
++++ b/components/openmw-mp/Packets/Actor/PacketActorAttack.cpp
+@@ -40,6 +40,14 @@ void PacketActorAttack::Actor(BaseActor &actor, bool send)
+         RW(actor.attack.attackStrength, send);
+         RW(actor.attack.rangedWeaponId, send, true);
+         RW(actor.attack.rangedAmmoId, send, true);
++
++        RW(actor.attack.projectileOrigin.origin[0], send);
++        RW(actor.attack.projectileOrigin.origin[1], send);
++        RW(actor.attack.projectileOrigin.origin[2], send);
++        RW(actor.attack.projectileOrigin.orientation[0], send);
++        RW(actor.attack.projectileOrigin.orientation[1], send);
++        RW(actor.attack.projectileOrigin.orientation[2], send);
++        RW(actor.attack.projectileOrigin.orientation[3], send);
+     }
+ 
+     if (actor.attack.isHit)
+diff --git a/components/openmw-mp/Packets/Actor/PacketActorCast.cpp b/components/openmw-mp/Packets/Actor/PacketActorCast.cpp
+index 4e3782ba1..aaf20cfca 100644
+--- a/components/openmw-mp/Packets/Actor/PacketActorCast.cpp
++++ b/components/openmw-mp/Packets/Actor/PacketActorCast.cpp
+@@ -36,4 +36,17 @@ void PacketActorCast::Actor(BaseActor &actor, bool send)
+         RW(actor.cast.instant, send);
+         RW(actor.cast.spellId, send, true);
+     }
++
++    RW(actor.cast.hasProjectile, send);
++
++    if (actor.cast.hasProjectile)
++    {
++        RW(actor.cast.projectileOrigin.origin[0], send);
++        RW(actor.cast.projectileOrigin.origin[1], send);
++        RW(actor.cast.projectileOrigin.origin[2], send);
++        RW(actor.cast.projectileOrigin.orientation[0], send);
++        RW(actor.cast.projectileOrigin.orientation[1], send);
++        RW(actor.cast.projectileOrigin.orientation[2], send);
++        RW(actor.cast.projectileOrigin.orientation[3], send);
++    }
+ }
+diff --git a/components/openmw-mp/Packets/Player/PacketGameSettings.cpp b/components/openmw-mp/Packets/Player/PacketGameSettings.cpp
+index cff2061d1..9485cfb23 100644
+--- a/components/openmw-mp/Packets/Player/PacketGameSettings.cpp
++++ b/components/openmw-mp/Packets/Player/PacketGameSettings.cpp
+@@ -21,12 +21,12 @@ void PacketGameSettings::Packet(RakNet::BitStream *newBitstream, bool send)
+     RW(player->enforcedLogLevel, send);
+     RW(player->physicsFramerate, send);
+ 
+-    uint32_t gameSettingCount = static_cast<uint32_t>(player->gameSettings.size());
+-    RW(gameSettingCount, send);
+-
+     std::string mapIndex;
+     std::string mapValue;
+ 
++    uint32_t gameSettingCount = static_cast<uint32_t>(player->gameSettings.size());
++    RW(gameSettingCount, send);
++
+     if (send)
+     {
+         for (auto&& gameSetting : player->gameSettings)
+@@ -47,4 +47,28 @@ void PacketGameSettings::Packet(RakNet::BitStream *newBitstream, bool send)
+             player->gameSettings[mapIndex] = mapValue;
+         }
+     }
++
++    uint32_t vrSettingCount = static_cast<uint32_t>(player->vrSettings.size());
++    RW(vrSettingCount, send);
++
++    if (send)
++    {
++        for (auto&& vrSetting : player->vrSettings)
++        {
++            mapIndex = vrSetting.first;
++            mapValue = vrSetting.second;
++            RW(mapIndex, send, false);
++            RW(mapValue, send, false);
++        }
++    }
++    else
++    {
++        player->vrSettings.clear();
++        for (unsigned int n = 0; n < vrSettingCount; n++)
++        {
++            RW(mapIndex, send, false);
++            RW(mapValue, send, false);
++            player->vrSettings[mapIndex] = mapValue;
++        }
++    }
+ }
+diff --git a/components/openmw-mp/Packets/Player/PacketPlayerAttack.cpp b/components/openmw-mp/Packets/Player/PacketPlayerAttack.cpp
+index 9e11bcdbe..d082fc5ad 100644
+--- a/components/openmw-mp/Packets/Player/PacketPlayerAttack.cpp
++++ b/components/openmw-mp/Packets/Player/PacketPlayerAttack.cpp
+@@ -41,6 +41,14 @@ void PacketPlayerAttack::Packet(RakNet::BitStream *newBitstream, bool send)
+         RW(player->attack.attackStrength, send);
+         RW(player->attack.rangedWeaponId, send, true);
+         RW(player->attack.rangedAmmoId, send, true);
++
++        RW(player->attack.projectileOrigin.origin[0], send);
++        RW(player->attack.projectileOrigin.origin[1], send);
++        RW(player->attack.projectileOrigin.origin[2], send);
++        RW(player->attack.projectileOrigin.orientation[0], send);
++        RW(player->attack.projectileOrigin.orientation[1], send);
++        RW(player->attack.projectileOrigin.orientation[2], send);
++        RW(player->attack.projectileOrigin.orientation[3], send);
+     }
+ 
+     if (player->attack.isHit)
+diff --git a/components/openmw-mp/Packets/Player/PacketPlayerCast.cpp b/components/openmw-mp/Packets/Player/PacketPlayerCast.cpp
+index 89b03f9ce..be44fe91f 100644
+--- a/components/openmw-mp/Packets/Player/PacketPlayerCast.cpp
++++ b/components/openmw-mp/Packets/Player/PacketPlayerCast.cpp
+@@ -39,4 +39,19 @@ void PacketPlayerCast::Packet(RakNet::BitStream *newBitstream, bool send)
+         RW(player->cast.instant, send);
+         RW(player->cast.spellId, send, true);
+     }
++
++    RW(player->cast.hasProjectile, send);
++
++    if (player->cast.hasProjectile)
++    {
++        RW(player->cast.projectileOrigin.origin[0], send);
++        RW(player->cast.projectileOrigin.origin[1], send);
++        RW(player->cast.projectileOrigin.origin[2], send);
++        RW(player->cast.projectileOrigin.orientation[0], send);
++        RW(player->cast.projectileOrigin.orientation[1], send);
++        RW(player->cast.projectileOrigin.orientation[2], send);
++        RW(player->cast.projectileOrigin.orientation[3], send);
++        RW(player->position, send);
++        RW(player->direction, send);
++    }
+ }
+diff --git a/components/openmw-mp/Version.hpp b/components/openmw-mp/Version.hpp
+index cf3d9a1a4..df4371604 100644
+--- a/components/openmw-mp/Version.hpp
++++ b/components/openmw-mp/Version.hpp
+@@ -1,8 +1,8 @@
+ #ifndef OPENMW_VERSION_HPP
+ #define OPENMW_VERSION_HPP
+ 
+-#define TES3MP_VERSION "0.8.0"
+-#define TES3MP_PROTO_VERSION 9
++#define TES3MP_VERSION "0.8.1"
++#define TES3MP_PROTO_VERSION 10
+ 
+ #define TES3MP_DEFAULT_PASSW "blankpassword"
+ #define TES3MP_MASTERSERVER_PASSW "12345"

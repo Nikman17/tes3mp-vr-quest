@@ -84,6 +84,12 @@ namespace mwmp
                 enchantmentCharge == rhs.enchantmentCharge && soul == rhs.soul;
         }
     };
+
+    struct ProjectileOrigin
+    {
+        float origin[3];
+        float orientation[4];
+    };
     
     struct Target
     {
@@ -117,6 +123,7 @@ namespace mwmp
         std::string rangedAmmoId;
 
         ESM::Position hitPosition;
+        ProjectileOrigin projectileOrigin;
 
         float damage = 0;
         float attackStrength = 0;
@@ -150,7 +157,8 @@ namespace mwmp
         std::string spellId; // id of spell (e.g. "fireball")
         std::string itemId;
 
-        ESM::Position hitPosition;
+        bool hasProjectile = false;
+        ProjectileOrigin projectileOrigin;
 
         bool isHit;
         bool success;

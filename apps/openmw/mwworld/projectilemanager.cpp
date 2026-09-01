@@ -52,6 +52,16 @@
 #include "../mwvr/vranimation.hpp"
 #endif
 
+/*
+    Start of tes3mp addition
+
+    Include additional headers for multiplayer purposes
+*/
+#include "../mwmp/MechanicsHelper.hpp"
+/*
+    End of tes3mp addition
+*/
+
 namespace
 {
     ESM::EffectList getMagicBoltData(std::vector<std::string>& projectileIDs, std::set<std::string>& sounds, float& speed, std::string& texture, std::string& sourceName, const std::string& id)
@@ -291,6 +301,42 @@ namespace MWWorld
                     * osg::Quat(caster.getRefData().getPosition().rot[2], osg::Vec3f(0,0,-1));
         else
             orient.makeRotate(osg::Vec3f(0,1,0), osg::Vec3f(fallbackDirection));
+
+        /*
+            Start of tes3mp addition
+
+            If the actor casting this is a LocalPlayer or LocalActor, track their projectile origin so it can be sent
+            in the next PlayerCast or ActorCast packet
+
+            Otherwise, set the projectileOrigin for a DedicatedPlayer or DedicatedActor
+        */
+        mwmp::Cast* localCast = MechanicsHelper::getLocalCast(caster);
+
+        if (localCast)
+        {
+            localCast->hasProjectile = true;
+            localCast->projectileOrigin.origin[0] = pos.x();
+            localCast->projectileOrigin.origin[1] = pos.y();
+            localCast->projectileOrigin.origin[2] = pos.z();
+            localCast->projectileOrigin.orientation[0] = orient.x();
+            localCast->projectileOrigin.orientation[1] = orient.y();
+            localCast->projectileOrigin.orientation[2] = orient.z();
+            localCast->projectileOrigin.orientation[3] = orient.w();
+        }
+        else
+        {
+            mwmp::Cast* dedicatedCast = MechanicsHelper::getDedicatedCast(caster);
+
+            if (dedicatedCast)
+            {
+                pos = osg::Vec3f(dedicatedCast->projectileOrigin.origin[0], dedicatedCast->projectileOrigin.origin[1], dedicatedCast->projectileOrigin.origin[2]);
+                orient = osg::Quat(dedicatedCast->projectileOrigin.orientation[0], dedicatedCast->projectileOrigin.orientation[1], dedicatedCast->projectileOrigin.orientation[2],
+                    dedicatedCast->projectileOrigin.orientation[3]);
+            }
+        }
+        /*
+            End of tes3mp addition
+        */
 
         MagicBoltState state;
         state.mSpellId = spellId;
