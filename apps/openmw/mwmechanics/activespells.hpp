@@ -107,7 +107,7 @@ namespace MWMechanics
                 Remove the spell with a certain ID and a certain timestamp, useful
                 when there are stacked spells with the same ID
             */
-            void removeSpellByTimestamp(const std::string& id, MWWorld::TimeStamp timestamp);
+            bool removeSpellByTimestamp(const std::string& id, MWWorld::TimeStamp timestamp);
             /*
                 End of tes3mp addition
             */

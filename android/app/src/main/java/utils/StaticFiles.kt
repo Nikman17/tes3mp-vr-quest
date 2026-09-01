@@ -31,9 +31,20 @@ object StaticFiles {
         PreferenceManager.getDefaultSharedPreferences(context)
             .getString("tes3mp_mode", "singleplayer") != "multiplayer"
 
-    /** Stamp value for the currently expected app version + engine flavor. */
-    fun stamp(context: Context): String =
-        "${BuildConfig.VERSION_CODE}-${if (isSinglePlayerMode(context)) "sp" else "mp"}"
+    /**
+     * Stamp value for the currently expected payload: app version + engine
+     * flavor + APK install time (so every reinstall redeploys — the payload
+     * content, e.g. the pinned resources/version handshake hash, can change
+     * between builds that share a version code).
+     */
+    fun stamp(context: Context): String {
+        val installed = try {
+            context.packageManager.getPackageInfo(context.packageName, 0).lastUpdateTime
+        } catch (e: Exception) {
+            0L
+        }
+        return "${BuildConfig.VERSION_CODE}-${if (isSinglePlayerMode(context)) "sp" else "mp"}-$installed"
+    }
 
     /** Re-deploys static files when version or engine flavor changed. */
     fun ensure(context: Context) {
@@ -51,14 +62,26 @@ object StaticFiles {
         reinstall(context)
     }
 
+    // Launcher-generated files living in GLOBAL_CONFIG that must survive a
+    // payload redeploy (they are not part of the APK assets).
+    private val PRESERVED = listOf("tes3mp-client-default.cfg", "settings.cfg")
+
     /** Wipes and re-extracts the payload for the active mode; writes the stamp. */
     fun reinstall(context: Context) {
+        val saved = PRESERVED.mapNotNull { name ->
+            val f = File(Constants.GLOBAL_CONFIG, name)
+            if (f.exists()) name to f.readBytes() else null
+        }
+
         remove()
 
         val assetBase = if (isSinglePlayerMode(context)) "libopenmw-sp" else "libopenmw"
         val copier = CopyFilesFromAssets(context)
         copier.copy("$assetBase/resources", Constants.RESOURCES)
         copier.copy("$assetBase/openmw", Constants.GLOBAL_CONFIG)
+
+        for ((name, bytes) in saved)
+            File(Constants.GLOBAL_CONFIG, name).writeBytes(bytes)
 
         File(Constants.USER_CONFIG).mkdirs()
         val userCfg = File(Constants.USER_OPENMW_CFG)

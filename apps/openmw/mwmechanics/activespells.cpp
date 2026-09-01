@@ -232,18 +232,16 @@ namespace MWMechanics
         */
         if (sendPacket)
         {
-            bool isStackingSpell = it == end() || stack;
-
             if (this == &MWMechanics::getPlayer().getClass().getCreatureStats(MWMechanics::getPlayer()).getActiveSpells())
             {
-                mwmp::Main::get().getLocalPlayer()->sendSpellsActiveAddition(id, isStackingSpell, params);
+                mwmp::Main::get().getLocalPlayer()->sendSpellsActiveAddition(id, stack, params);
             }
             else
             {
                 MWWorld::Ptr actorPtr = MWBase::Environment::get().getWorld()->searchPtrViaActorId(getActorId());
 
                 if (mwmp::Main::get().getCellController()->isLocalActor(actorPtr))
-                    mwmp::Main::get().getCellController()->getLocalActor(actorPtr)->sendSpellsActiveAddition(id, isStackingSpell, params);
+                    mwmp::Main::get().getCellController()->getLocalActor(actorPtr)->sendSpellsActiveAddition(id, stack, params);
             }
         }
         /*
@@ -308,8 +306,10 @@ namespace MWMechanics
 
         Remove the spell with a certain ID and a certain timestamp, useful
         when there are stacked spells with the same ID
+
+        Returns a boolean that indicates whether the corresponding spell was found
     */
-    void ActiveSpells::removeSpellByTimestamp(const std::string& id, MWWorld::TimeStamp timestamp)
+    bool ActiveSpells::removeSpellByTimestamp(const std::string& id, MWWorld::TimeStamp timestamp)
     {
         for (TContainer::iterator spell = mSpells.begin(); spell != mSpells.end(); ++spell)
         {
@@ -319,10 +319,12 @@ namespace MWMechanics
                 {
                     spell->second.mEffects.clear();
                     mSpellsChanged = true;
-                    break;
+                    return true;
                 }
             }
         }
+
+        return false;
     }
     /*
         End of tes3mp addition
