@@ -104,3 +104,8 @@ must allow your content list.
 - Parallax depends on the texture pack shipping height data in the normal-map
   alpha; with plain `_n.dds` you only get normal mapping
 - No in-game FPS counter yet; use `adb logcat` or QGO metrics for now
+
+ # Support
+- If you like it, please support me
+https://www.patreon.com/c/nikman17/shop
+ ❤️
