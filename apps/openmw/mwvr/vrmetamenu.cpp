@@ -7,6 +7,17 @@
 #include "../mwbase/world.hpp"
 #include "../mwbase/statemanager.hpp"
 
+/*
+    Start of tes3mp addition
+
+    Include additional headers for multiplayer purposes
+*/
+#include "../mwmp/Main.hpp"
+#include "../mwmp/GUIController.hpp"
+/*
+    End of tes3mp addition
+*/
+
 #include "vrenvironment.hpp"
 #include "vrinputmanager.hpp"
 
@@ -101,6 +112,19 @@ namespace MWVR
         Environment::get().getInputManager()->requestRecenter(true);
     }
 
+    /*
+        Start of tes3mp addition
+
+        Handle a button toggling the display mode of the Chat window
+    */
+    void VrMetaMenu::onChatMode()
+    {
+        mwmp::Main::get().getGUIController()->changeChatMode();
+    }
+    /*
+        End of tes3mp addition
+    */
+
     void VrMetaMenu::close()
     {
         MWBase::Environment::get().getWindowManager()->removeGuiMode(MWGui::GM_VrMetaMenu);
@@ -128,6 +152,16 @@ namespace MWVR
             onQuickSave();       
         else if (name == "recenter")
             onRecenter();
+        /*
+            Start of tes3mp addition
+
+            Handle a button toggling the display mode of the Chat window
+        */
+        else if (name == "chat")
+            onChatMode();
+        /*
+            End of tes3mp addition
+        */
     }
 
     bool VrMetaMenu::exit()
@@ -137,7 +171,15 @@ namespace MWVR
 
     void VrMetaMenu::updateMenu()
     {
-        static std::vector<std::string> buttons{ "return", "recenter", "quicksave", "quickload", "console", "inventory", "journal", "rest", "quickmenu", "gamemenu" };
+        /*
+            Start of tes3mp change (major)
+
+            Add "chat" to the list of buttons
+        */
+        static std::vector<std::string> buttons{ "return", "recenter", "quicksave", "quickload", "console", "inventory", "journal", "rest", "quickmenu", "gamemenu", "chat" };
+        /*
+            End of tes3mp change (major)
+        */
 
         if(mButtons.empty())
         for (std::string& buttonId : buttons)

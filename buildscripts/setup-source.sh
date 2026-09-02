@@ -158,7 +158,8 @@ fi
 # Quest-specific patches live in the repo (buildscripts/quest-patches); each is idempotent
 echo "==> Applying Quest patches..."
 for p in patch_openxr_android_init patch_quest_swapchain_blit patch_vr_chat_buttons \
-         patch_vr_chat_font patch_vr_chat_actions patch_vr_refresh_rate patch_fatal_log_order; do
+         patch_vr_chat_font patch_vr_chat_actions patch_vr_refresh_rate patch_fatal_log_order \
+         patch_vr_vkb_and_autoname patch_vr_chat_ui_v2; do
     echo "  -> $p"
     python3 "$DIR/quest-patches/$p.py"
 done

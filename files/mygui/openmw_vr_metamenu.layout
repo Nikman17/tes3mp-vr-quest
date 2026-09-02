@@ -16,6 +16,11 @@
             <Property key="Caption" value="Recenter"/>
             <Property key="FontHeight" value="32"/>
         </Widget>
+        
+        <Widget type="AutoSizedButton" skin="MW_Button" name="chat" align="HCenter">
+            <Property key="Caption" value="Chat Window Mode"/>
+            <Property key="FontHeight" value="32"/>
+        </Widget>
 
         <Widget type="Spacer"/>
         <Widget type="Widget" skin="IB_T" align="HCenter" position="0 0 125 4">

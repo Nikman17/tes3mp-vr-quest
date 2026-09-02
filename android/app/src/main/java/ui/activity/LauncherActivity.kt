@@ -65,6 +65,7 @@ class LauncherActivity : AppCompatActivity() {
     private lateinit var vrResolution:  Spinner
     private lateinit var vrRefresh:     Spinner
     private lateinit var vrHud:         Spinner
+    private lateinit var vrGraphics:    Spinner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(TAG, "onCreate")
@@ -102,6 +103,8 @@ class LauncherActivity : AppCompatActivity() {
         setupVrSpinner(vrResolution, "vr_resolution", arrayOf("100% (1440×1584)", "90%", "80%", "70%"))
         setupVrSpinner(vrRefresh, "vr_refresh", arrayOf("72 Hz", "90 Hz", "120 Hz"))
         setupVrSpinner(vrHud, "vr_hud", arrayOf("Wrist", "Top"))
+        vrGraphics = findViewById(R.id.vr_graphics_spinner)
+        setupVrSpinner(vrGraphics, "vr_graphics", arrayOf("Performance", "Balanced", "Quality"))
 
         restoreMode()
         serverIpEdit.setText(prefs.getString(PREF_SERVER_IP, ""))
@@ -489,8 +492,37 @@ class LauncherActivity : AppCompatActivity() {
         )
 
         val charName = prefs.getString(PREF_CHAR_NAME, "")!!.trim()
-        val generalKeys = listOf("player name")
-        val generalLines = if (charName.isEmpty()) emptyList() else listOf("player name = $charName")
+
+        // Graphics presets: keep decent view range, sacrifice effects first.
+        // Quality additionally enables normal maps -> parallax (Nirn HD/PBR
+        // packs ship height data in the normal-map alpha channel).
+        val graphics = prefs.getInt("vr_graphics", 1)
+        val viewingDistance = when (graphics) { 0 -> 2048; 2 -> 6144; else -> 4096 }
+        val distantTerrain = graphics >= 1
+        val normalMaps = graphics == 2
+        val grassDensity = when (graphics) { 0 -> 0.25; 2 -> 1.0; else -> 0.5 }
+
+        // section -> (managed keys, lines the launcher owns)
+        val sections = linkedMapOf(
+            "VR" to Pair(managedKeys, ourLines),
+            "General" to Pair(listOf("player name"),
+                if (charName.isEmpty()) emptyList() else listOf("player name = $charName")),
+            "Camera" to Pair(listOf("viewing distance"),
+                listOf("viewing distance = $viewingDistance")),
+            "Shadows" to Pair(listOf("enable shadows"),
+                listOf("enable shadows = false")),
+            "Terrain" to Pair(listOf("distant terrain"),
+                listOf("distant terrain = $distantTerrain")),
+            "Groundcover" to Pair(listOf("density"),
+                listOf("density = $grassDensity")),
+            "Shaders" to Pair(
+                listOf("auto use object normal maps", "auto use terrain normal maps"),
+                listOf("auto use object normal maps = $normalMaps",
+                       "auto use terrain normal maps = $normalMaps")),
+            "Water" to Pair(listOf("shader", "refraction"),
+                listOf("shader = false", "refraction = false"))
+        )
+        val allKeys = sections.values.flatMap { it.first }
 
         val targets = listOf(
             java.io.File(Environment.getExternalStorageDirectory(), "tes3mpvr/config/settings.cfg"),
@@ -502,20 +534,19 @@ class LauncherActivity : AppCompatActivity() {
                 var kept = (if (f.exists()) f.readLines() else emptyList())
                     .filter { line ->
                         val t = line.trim()
-                        (managedKeys + generalKeys).none { k -> t.startsWith("$k =") || t.startsWith("$k=") }
+                        allKeys.none { k -> t.startsWith("$k =") || t.startsWith("$k=") }
                     }
+                for ((name, sec) in sections) {
+                    if (sec.second.isNotEmpty() && kept.none { it.trim() == "[$name]" })
+                        kept = kept + listOf("[$name]")
+                }
                 val out = StringBuilder()
-                if (kept.none { it.trim() == "[VR]" }) {
-                    kept = kept + listOf("[VR]")
-                }
-                if (generalLines.isNotEmpty() && kept.none { it.trim() == "[General]" }) {
-                    kept = listOf("[General]") + kept
-                }
                 for (line in kept) {
                     out.append(line).append('\n')
-                    when (line.trim()) {
-                        "[VR]" -> ourLines.forEach { out.append(it).append('\n') }
-                        "[General]" -> generalLines.forEach { out.append(it).append('\n') }
+                    val t = line.trim()
+                    if (t.startsWith("[") && t.endsWith("]")) {
+                        sections[t.substring(1, t.length - 1)]?.second
+                            ?.forEach { out.append(it).append('\n') }
                     }
                 }
                 f.writeText(out.toString())

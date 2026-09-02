@@ -51,6 +51,15 @@ namespace MWVR
             void onQuickLoad();
             void onQuickSave();
             void onRecenter();
+            /*
+                Start of tes3mp addition
+
+                Handle a button toggling the display mode of the Chat window
+            */
+            void onChatMode();
+            /*
+                End of tes3mp addition
+            */
             void close();
 
             void updateMenu();
