@@ -212,7 +212,7 @@
                     android:layout_width="0dp"
                     android:layout_height="48dp"
                     android:layout_weight="3"
-                    android:hint="25565"
+                    android:hint="Port: 25565"
                     android:textColor="#f0e8d4"
                     android:textColorHint="#6d6250"
                     android:textSize="14sp"

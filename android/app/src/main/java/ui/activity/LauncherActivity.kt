@@ -497,7 +497,7 @@ class LauncherActivity : AppCompatActivity() {
         // Quality additionally enables normal maps -> parallax (Nirn HD/PBR
         // packs ship height data in the normal-map alpha channel).
         val graphics = prefs.getInt("vr_graphics", 1)
-        val viewingDistance = when (graphics) { 0 -> 2048; 2 -> 6144; else -> 4096 }
+        val viewingDistance = when (graphics) { 0 -> 2048; 2 -> 5120; else -> 4096 }
         val distantTerrain = graphics >= 1
         val normalMaps = graphics == 2
         val grassDensity = when (graphics) { 0 -> 0.25; 2 -> 1.0; else -> 0.5 }
@@ -513,8 +513,10 @@ class LauncherActivity : AppCompatActivity() {
                 listOf("enable shadows = false")),
             "Terrain" to Pair(listOf("distant terrain"),
                 listOf("distant terrain = $distantTerrain")),
-            "Groundcover" to Pair(listOf("density"),
-                listOf("density = $grassDensity")),
+            "Groundcover" to Pair(listOf("enabled", "density", "rendering distance"),
+                listOf("enabled = ${graphics >= 1}",
+                       "density = $grassDensity",
+                       "rendering distance = ${if (graphics == 2) 2048 else 1024}")),
             "Shaders" to Pair(
                 listOf("auto use object normal maps", "auto use terrain normal maps"),
                 listOf("auto use object normal maps = $normalMaps",
