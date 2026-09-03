@@ -46,7 +46,9 @@ IMPL_ANCHOR = """    void VRGUIManager::insertLayer(const std::string& name)"""
 IMPL_NEW = """    void VRGUIManager::createSkySphere()
     {
         // vr_menu_skybox: equirect panorama sphere shown behind menu/loading
-        std::string texPath = Settings::Manager::getString("menu sky texture", "VR");
+        std::string texPath;
+        try { texPath = Settings::Manager::getString("menu sky texture", "VR"); }
+        catch (...) { /* key absent from defaults - use the shipped panorama */ }
         if (texPath.empty())
             texPath = "textures/vr_menu_sky.png";
         osg::ref_ptr<osg::Image> image;
