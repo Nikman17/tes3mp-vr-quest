@@ -159,7 +159,7 @@ fi
 echo "==> Applying Quest patches..."
 for p in patch_openxr_android_init patch_quest_swapchain_blit patch_vr_chat_buttons \
          patch_vr_chat_font patch_vr_chat_actions patch_vr_refresh_rate patch_fatal_log_order \
-         patch_vr_vkb_and_autoname patch_vr_chat_ui_v2 patch_vr_menu_skybox \
+         patch_vr_vkb_and_autoname patch_vr_chat_ui_v2 \
          patch_vr_performance; do
     echo "  -> $p"
     python3 "$DIR/quest-patches/$p.py"
