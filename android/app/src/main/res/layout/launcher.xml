@@ -355,6 +355,16 @@
                     android:paddingLeft="12dp" />
             </LinearLayout>
 
+            <CheckBox
+                android:id="@+id/vr_show_fps"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="Show FPS on the wrist HUD"
+                android:textColor="#c9bda2"
+                android:textSize="14sp"
+                android:buttonTint="#d9a92f"
+                android:layout_marginTop="4dp" />
+
         </LinearLayout>
 
         <!-- ── LAUNCH ── -->

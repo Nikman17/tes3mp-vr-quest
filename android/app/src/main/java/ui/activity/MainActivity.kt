@@ -455,6 +455,16 @@ open class MainActivity : AppCompatActivity() {
                 file.Writer.write(Constants.OPENMW_CFG, "resources", Constants.RESOURCES)
                 file.Writer.write(Constants.OPENMW_CFG, "data", "\"" + inst.findDataFiles() + "\"")
 
+                // VR menu skybox: extra data dir with the panorama, user-replaceable
+                // (drop your own equirect PNG at tes3mpvr/vrdata/textures/vr_menu_sky.png)
+                val vrData = File(android.os.Environment.getExternalStorageDirectory(), "tes3mpvr/vrdata")
+                if (!File(vrData, "textures/vr_menu_sky.png").exists())
+                    CopyFilesFromAssets(this).copy("vrdata", vrData.absolutePath)
+                val cfgFile = File(Constants.OPENMW_CFG)
+                val extraData = "data=\"${vrData.absolutePath}\""
+                if (cfgFile.exists() && !cfgFile.readText().contains(extraData))
+                    cfgFile.appendText("$extraData\n")
+
                 file.Writer.write(Constants.OPENMW_CFG, "encoding", prefs!!.getString("pref_encoding", GameInstaller.DEFAULT_CHARSET_PREF)!!)
 
                 configureDefaultsBin(mapOf(

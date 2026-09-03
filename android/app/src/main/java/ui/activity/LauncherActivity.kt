@@ -105,6 +105,11 @@ class LauncherActivity : AppCompatActivity() {
         setupVrSpinner(vrHud, "vr_hud", arrayOf("Wrist", "Top"))
         vrGraphics = findViewById(R.id.vr_graphics_spinner)
         setupVrSpinner(vrGraphics, "vr_graphics", arrayOf("Performance", "Balanced", "Quality"))
+        val showFps = findViewById<android.widget.CheckBox>(R.id.vr_show_fps)
+        showFps.isChecked = prefs.getBoolean("vr_show_fps", false)
+        showFps.setOnCheckedChangeListener { _, checked ->
+            prefs.edit().putBoolean("vr_show_fps", checked).apply()
+        }
 
         restoreMode()
         serverIpEdit.setText(prefs.getString(PREF_SERVER_IP, ""))
@@ -478,7 +483,8 @@ class LauncherActivity : AppCompatActivity() {
             "smooth turning", "snap angle",
             "left eye resolution x", "left eye resolution y",
             "right eye resolution x", "right eye resolution y",
-            "display refresh rate", "left hand hud position"
+            "display refresh rate", "left hand hud position",
+            "show fps"
         )
         val ourLines = listOf(
             "smooth turning = $smoothTurning",
@@ -488,7 +494,8 @@ class LauncherActivity : AppCompatActivity() {
             "right eye resolution x = $eyeX",
             "right eye resolution y = $eyeY",
             "display refresh rate = $refreshRate",
-            "left hand hud position = $hudPos"
+            "left hand hud position = $hudPos",
+            "show fps = ${prefs.getBoolean("vr_show_fps", false)}"
         )
 
         val charName = prefs.getString(PREF_CHAR_NAME, "")!!.trim()
