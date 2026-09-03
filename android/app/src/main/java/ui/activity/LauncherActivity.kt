@@ -110,6 +110,10 @@ class LauncherActivity : AppCompatActivity() {
         showFps.setOnCheckedChangeListener { _, checked ->
             prefs.edit().putBoolean("vr_show_fps", checked).apply()
         }
+        setupVrSpinner(findViewById(R.id.vr_foveation_spinner), "vr_foveation",
+            arrayOf("Off", "Low", "Medium", "High", "High (dynamic)"), default = 4)
+        setupVrSpinner(findViewById(R.id.vr_boost_spinner), "vr_boost",
+            arrayOf("Standard", "High clocks", "Boost"), default = 1)
 
         restoreMode()
         serverIpEdit.setText(prefs.getString(PREF_SERVER_IP, ""))
@@ -430,7 +434,7 @@ class LauncherActivity : AppCompatActivity() {
 
     // ── VR settings ───────────────────────────────────────────────────
 
-    private fun setupVrSpinner(spinner: Spinner, prefKey: String, values: Array<String>) {
+    private fun setupVrSpinner(spinner: Spinner, prefKey: String, values: Array<String>, default: Int = 0) {
         // The panel background is dark; the stock spinner item text is dark too,
         // which made the closed spinner look empty ("broken"). Force light text.
         val adapter = object : ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, values) {
@@ -448,7 +452,7 @@ class LauncherActivity : AppCompatActivity() {
         }
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinner.adapter = adapter
-        spinner.setSelection(prefs.getInt(prefKey, 0))
+        spinner.setSelection(prefs.getInt(prefKey, default))
         spinner.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: android.widget.AdapterView<*>?, view: View?, position: Int, id: Long) {
                 prefs.edit().putInt(prefKey, position).apply()
@@ -479,12 +483,20 @@ class LauncherActivity : AppCompatActivity() {
         val refreshRate = when (refresh) { 1 -> 90; 2 -> 120; else -> 72 }
         val hudPos = if (hud == 1) "top" else "wrist"
 
+        // Foveation spinner: 0 Off, 1..3 static low..high, 4 = high dynamic
+        val fovPref = prefs.getInt("vr_foveation", 4)
+        val fovLevel = if (fovPref == 4) 3 else fovPref
+        val fovDynamic = (fovPref == 4)
+        // Boost spinner: 0 Standard (no hint), 1 sustained-high, 2 boost
+        val perfLevel = when (prefs.getInt("vr_boost", 1)) { 0 -> -1; 2 -> 3; else -> 2 }
+
         val managedKeys = listOf(
             "smooth turning", "snap angle",
             "left eye resolution x", "left eye resolution y",
             "right eye resolution x", "right eye resolution y",
             "display refresh rate", "left hand hud position",
-            "show fps"
+            "show fps", "foveation level", "foveation dynamic",
+            "cpu level", "gpu level"
         )
         val ourLines = listOf(
             "smooth turning = $smoothTurning",
@@ -495,7 +507,11 @@ class LauncherActivity : AppCompatActivity() {
             "right eye resolution y = $eyeY",
             "display refresh rate = $refreshRate",
             "left hand hud position = $hudPos",
-            "show fps = ${prefs.getBoolean("vr_show_fps", false)}"
+            "show fps = ${prefs.getBoolean("vr_show_fps", false)}",
+            "foveation level = $fovLevel",
+            "foveation dynamic = $fovDynamic",
+            "cpu level = $perfLevel",
+            "gpu level = $perfLevel"
         )
 
         val charName = prefs.getString(PREF_CHAR_NAME, "")!!.trim()

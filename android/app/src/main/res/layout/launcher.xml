@@ -355,6 +355,50 @@
                     android:paddingLeft="12dp" />
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="44dp"
+                    android:text="Foveation"
+                    android:textColor="#c9bda2"
+                    android:textSize="14sp"
+                    android:gravity="center_vertical" />
+                <Spinner
+                    android:id="@+id/vr_foveation_spinner"
+                    android:layout_width="0dp"
+                    android:layout_weight="2"
+                    android:layout_height="44dp"
+                    android:background="@drawable/lc_input"
+                    android:paddingLeft="12dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="44dp"
+                    android:text="CPU/GPU boost"
+                    android:textColor="#c9bda2"
+                    android:textSize="14sp"
+                    android:gravity="center_vertical" />
+                <Spinner
+                    android:id="@+id/vr_boost_spinner"
+                    android:layout_width="0dp"
+                    android:layout_weight="2"
+                    android:layout_height="44dp"
+                    android:background="@drawable/lc_input"
+                    android:paddingLeft="12dp" />
+            </LinearLayout>
+
             <CheckBox
                 android:id="@+id/vr_show_fps"
                 android:layout_width="match_parent"
