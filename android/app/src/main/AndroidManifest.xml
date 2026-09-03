@@ -72,7 +72,7 @@
         <activity
             android:name="ui.activity.VrEntryActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
+            android:theme="@style/MyTheme"
             android:screenOrientation="landscape"
             android:configChanges="screenSize|orientation|keyboardHidden">
             <meta-data android:name="com.oculus.vr.mode" android:value="vr_only" />
