@@ -76,12 +76,31 @@ IMPL_NEW = """    void VRGUIManager::createSkySphere()
         tex->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
 
         osg::StateSet* state = drawable->getOrCreateStateSet();
-        state->setTextureAttributeAndModes(0, tex, osg::StateAttribute::ON);
+        state->setTextureAttributeAndModes(0, tex, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
         state->setMode(GL_LIGHTING, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED);
         state->setMode(GL_DEPTH_TEST, osg::StateAttribute::OFF);
         state->setAttributeAndModes(new osg::CullFace(osg::CullFace::FRONT), osg::StateAttribute::ON);
         state->setRenderBinDetails(-100, "RenderBin"); // draw first, behind everything
         state->setAttributeAndModes(new osg::Depth(osg::Depth::LEQUAL, 0.0, 1.0, false));
+
+        // The engine forces shaders globally; fixed-function texturing is
+        // ignored, leaving the sphere untextured. Give it its own trivial
+        // program (gl4es handles the gl_* builtins).
+        osg::ref_ptr<osg::Program> prog = new osg::Program();
+        prog->addShader(new osg::Shader(osg::Shader::VERTEX,
+            "varying vec2 skyUV;\n"
+            "void main() {\n"
+            "    skyUV = gl_MultiTexCoord0.xy;\n"
+            "    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+            "}\n"));
+        prog->addShader(new osg::Shader(osg::Shader::FRAGMENT,
+            "uniform sampler2D skyTex;\n"
+            "varying vec2 skyUV;\n"
+            "void main() {\n"
+            "    gl_FragColor = texture2D(skyTex, skyUV);\n"
+            "}\n"));
+        state->setAttributeAndModes(prog, osg::StateAttribute::ON | osg::StateAttribute::PROTECTED | osg::StateAttribute::OVERRIDE);
+        state->addUniform(new osg::Uniform("skyTex", 0));
 
         mSkySphere = new osg::PositionAttitudeTransform();
         // rotate so the panorama seam sits behind the player and the horizon is level
